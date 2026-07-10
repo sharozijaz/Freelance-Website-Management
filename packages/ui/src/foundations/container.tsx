@@ -4,11 +4,11 @@ import { cn } from "@agency/lib/utils";
 type ContainerSize = "sm" | "md" | "lg" | "xl" | "2xl" | "full";
 
 const containerSizes: Record<ContainerSize, string> = {
-  sm: "max-w-container-sm",
-  md: "max-w-container-md",
-  lg: "max-w-container-lg",
-  xl: "max-w-container-xl",
-  "2xl": "max-w-container-2xl",
+  sm: "max-w-[var(--container-sm)]",
+  md: "max-w-[var(--container-md)]",
+  lg: "max-w-[var(--container-lg)]",
+  xl: "max-w-[var(--container-xl)]",
+  "2xl": "max-w-[var(--container-2xl)]",
   full: "max-w-full",
 };
 
