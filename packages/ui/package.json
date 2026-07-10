@@ -6,8 +6,11 @@
   "exports": {
     ".": "./src/index.ts",
     "./components": "./src/components/index.ts",
+    "./foundations": "./src/foundations/index.ts",
     "./hooks": "./src/hooks/index.ts",
-    "./styles": "./src/styles/globals.css"
+    "./styles": "./src/styles/globals.css",
+    "./tokens": "./src/tokens/index.ts",
+    "./themes": "./src/themes/index.ts"
   },
   "scripts": {
     "lint": "eslint .",

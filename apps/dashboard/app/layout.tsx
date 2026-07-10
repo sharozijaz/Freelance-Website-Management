@@ -16,7 +16,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html lang="en" suppressHydrationWarning>
       <body>
         <div className="min-h-screen lg:grid lg:grid-cols-[16rem_1fr]">
-          <aside className="border-r bg-[hsl(var(--muted))] p-4">Sidebar placeholder</aside>
+          <aside className="border-r bg-muted p-4">Sidebar placeholder</aside>
           <div>
             <header className="border-b p-4">Header placeholder</header>
             {children}
