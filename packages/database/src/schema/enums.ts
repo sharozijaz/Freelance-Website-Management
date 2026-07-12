@@ -47,18 +47,49 @@ export const websiteStatusEnum = pgEnum("website_status", [
 
 export const deploymentStatusEnum = pgEnum("deployment_status", [
   "not_configured",
+  "pending",
   "queued",
+  "building",
   "deploying",
   "ready",
   "failed",
+  "cancelled",
+  "unknown",
+]);
+
+export const deploymentProviderEnum = pgEnum("deployment_provider", [
+  "vercel",
+  "manual",
+  "netlify",
+  "cloudflare",
+]);
+
+export const hostingConnectionStatusEnum = pgEnum("hosting_connection_status", [
+  "not_connected",
+  "connected",
+  "invalid",
+  "unsupported",
+]);
+
+export const deploymentEnvironmentEnum = pgEnum("deployment_environment", [
+  "production",
+  "preview",
+  "staging",
+  "development",
 ]);
 
 export const projectStatusEnum = pgEnum("project_status", [
   "planning",
   "design",
   "development",
+  "internal_review",
+  "client_review",
+  "ready_to_launch",
   "review",
   "live",
+  "on_hold",
+  "completed",
+  "cancelled",
   "paused",
   "archived",
 ]);
@@ -77,4 +108,23 @@ export const contentPlaceholderStatusEnum = pgEnum("content_placeholder_status",
   "draft",
   "published",
   "archived",
+]);
+
+export const formFieldTypeEnum = pgEnum("form_field_type", [
+  "text",
+  "email",
+  "phone",
+  "textarea",
+  "select",
+  "radio",
+  "checkbox",
+  "consent",
+  "hidden",
+]);
+
+export const formSubmissionStatusEnum = pgEnum("form_submission_status", [
+  "new",
+  "read",
+  "archived",
+  "spam",
 ]);

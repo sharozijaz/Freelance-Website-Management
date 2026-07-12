@@ -1,0 +1,553 @@
+import { and, desc, eq, ilike, inArray, isNull, sql } from "drizzle-orm";
+import type { createDatabaseClient } from "@agency/database";
+import {
+  auditLogs,
+  formFields,
+  forms,
+  formSubmissions,
+  mediaAssets,
+  organizations,
+  pages,
+  posts,
+  websites,
+} from "@agency/database/schema";
+import { normalizeOrganizationSlug } from "@agency/auth/organizations";
+import { assertDashboardPermission, getScopedOrganizationIds } from "./access";
+import { getPagination } from "./filters";
+import { requireWebsiteAccess } from "./projects";
+import type { DashboardRequest, DashboardSearchParams } from "./types";
+
+type Database = ReturnType<typeof createDatabaseClient>;
+
+export const formFieldTypes = [
+  "text",
+  "email",
+  "phone",
+  "textarea",
+  "select",
+  "radio",
+  "checkbox",
+  "consent",
+  "hidden",
+] as const;
+
+export type FormFieldType = (typeof formFieldTypes)[number];
+export type SubmissionStatus = "archived" | "new" | "read" | "spam";
+
+export class FormValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "FormValidationError";
+  }
+}
+
+function safeString(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return value.toString();
+  return "";
+}
+
+function scopedOrgIds(request: DashboardRequest) {
+  return getScopedOrganizationIds(request);
+}
+
+function parseMetadataNumber(metadata: Record<string, unknown>, key: string): number | null {
+  const value = metadata[key];
+  return typeof value === "number" ? value : null;
+}
+
+export function getMediaType(mimeType: string): "document" | "image" | "other" | "pdf" | "video" {
+  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType.startsWith("video/")) return "video";
+  if (mimeType === "application/pdf") return "pdf";
+  if (
+    mimeType.includes("word") ||
+    mimeType.includes("presentation") ||
+    mimeType.includes("spreadsheet") ||
+    mimeType === "text/plain"
+  ) {
+    return "document";
+  }
+
+  return "other";
+}
+
+export async function getMediaOperations({
+  database,
+  params,
+  request,
+}: {
+  database: Database;
+  params: DashboardSearchParams & { type?: string; websiteId?: string };
+  request: DashboardRequest;
+}) {
+  assertDashboardPermission(request, "cms:read", params.organizationId);
+  const { limit, offset } = getPagination(params);
+  const orgIds = scopedOrgIds(request);
+  const conditions = [
+    isNull(mediaAssets.deletedAt),
+    params.organizationId ? eq(mediaAssets.organizationId, params.organizationId) : undefined,
+    params.websiteId ? eq(mediaAssets.websiteId, params.websiteId) : undefined,
+    orgIds ? inArray(mediaAssets.organizationId, orgIds) : undefined,
+    params.query ? ilike(mediaAssets.filename, `%${params.query}%`) : undefined,
+    params.type && params.type !== "all"
+      ? params.type === "application"
+        ? ilike(mediaAssets.mimeType, "application/%")
+        : ilike(mediaAssets.mimeType, `${params.type}/%`)
+      : undefined,
+  ].filter(Boolean);
+
+  const rows = await database
+    .select({
+      altText: mediaAssets.altText,
+      filename: mediaAssets.filename,
+      id: mediaAssets.id,
+      metadata: mediaAssets.metadata,
+      mimeType: mediaAssets.mimeType,
+      organizationId: mediaAssets.organizationId,
+      organizationName: organizations.name,
+      uploadedAt: mediaAssets.createdAt,
+      uploadedByUserId: mediaAssets.uploadedByUserId,
+      websiteId: mediaAssets.websiteId,
+      websiteName: websites.name,
+    })
+    .from(mediaAssets)
+    .innerJoin(organizations, eq(mediaAssets.organizationId, organizations.id))
+    .leftJoin(websites, eq(mediaAssets.websiteId, websites.id))
+    .where(and(...conditions))
+    .orderBy(params.sort === "uploaded_asc" ? mediaAssets.createdAt : desc(mediaAssets.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  return {
+    items: rows.map((row) => ({
+      ...row,
+      fileSize: parseMetadataNumber(row.metadata, "fileSize"),
+      height: parseMetadataNumber(row.metadata, "height"),
+      mediaType: getMediaType(row.mimeType),
+      width: parseMetadataNumber(row.metadata, "width"),
+    })),
+    page: params.page,
+  };
+}
+
+export function normalizeFormField(input: {
+  helpText?: string | null;
+  label: string;
+  name?: string | null;
+  placeholder?: string | null;
+  required?: boolean;
+  type: string;
+}) {
+  if (!formFieldTypes.includes(input.type as FormFieldType)) {
+    throw new FormValidationError("Unsupported field type.");
+  }
+
+  const label = input.label.trim();
+  const name = normalizeOrganizationSlug(input.name ?? label).replaceAll("-", "_");
+
+  if (!name || !/^[a-z][a-z0-9_]*$/.test(name)) {
+    throw new FormValidationError("Field name must start with a letter and use letters, numbers, or underscores.");
+  }
+
+  return {
+    helpText: input.helpText?.trim() ?? null,
+    label,
+    name,
+    placeholder: input.placeholder?.trim() ?? null,
+    required: Boolean(input.required),
+    type: input.type as FormFieldType,
+  };
+}
+
+export async function createForm({
+  database,
+  input,
+  request,
+}: {
+  database: Database;
+  input: {
+    fields: ReturnType<typeof normalizeFormField>[];
+    name: string;
+    redirectUrl?: string | null;
+    successMessage?: string | null;
+    websiteId: string;
+  };
+  request: DashboardRequest;
+}) {
+  const website = await requireWebsiteAccess({
+    database,
+    request,
+    websiteId: input.websiteId,
+  });
+  assertDashboardPermission(request, "forms:manage", website.organizationId);
+  const name = input.name.trim();
+  if (name.length < 2) {
+    throw new FormValidationError("Form name must be at least 2 characters.");
+  }
+
+  const slug = normalizeOrganizationSlug(name);
+  const safeRedirect = validateSafeRedirect(input.redirectUrl);
+
+  const [form] = await database.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(forms)
+      .values({
+        configuration: {
+          notification: {},
+          redirectUrl: safeRedirect,
+          successMessage: input.successMessage?.trim() ?? "Thanks, your submission was received.",
+        },
+        name,
+        organizationId: website.organizationId,
+        slug,
+        status: "published",
+        websiteId: website.id,
+      })
+      .returning();
+
+    if (!created) {
+      throw new FormValidationError("Form could not be created.");
+    }
+
+    if (input.fields.length > 0) {
+      await tx.insert(formFields).values(
+        input.fields.map((field, index) => ({
+          fieldOrder: index,
+          formId: created.id,
+          helpText: field.helpText,
+          label: field.label,
+          name: field.name,
+          organizationId: website.organizationId,
+          placeholder: field.placeholder,
+          required: field.required,
+          type: field.type,
+          websiteId: website.id,
+        })),
+      );
+    }
+
+    await tx.insert(auditLogs).values({
+      action: "form.created",
+      actorUserId: request.context.user.id,
+      metadata: { websiteId: website.id },
+      organizationId: website.organizationId,
+      resourceId: created.id,
+      resourceType: "form",
+    });
+
+    return [created];
+  });
+
+  return form;
+}
+
+export function validateSafeRedirect(value?: string | null): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return trimmed;
+
+  let url: URL;
+  try {
+    url = new URL(trimmed);
+  } catch {
+    throw new FormValidationError("Redirect URL must be a valid relative or HTTPS URL.");
+  }
+
+  if (url.protocol !== "https:") {
+    throw new FormValidationError("Redirect URL must use HTTPS.");
+  }
+
+  return url.toString();
+}
+
+export async function getForms({
+  database,
+  params,
+  request,
+}: {
+  database: Database;
+  params: DashboardSearchParams & { websiteId?: string };
+  request: DashboardRequest;
+}) {
+  assertDashboardPermission(request, "forms:read", params.organizationId);
+  const { limit, offset } = getPagination(params);
+  const orgIds = scopedOrgIds(request);
+  const conditions = [
+    isNull(forms.deletedAt),
+    params.organizationId ? eq(forms.organizationId, params.organizationId) : undefined,
+    params.websiteId ? eq(forms.websiteId, params.websiteId) : undefined,
+    orgIds ? inArray(forms.organizationId, orgIds) : undefined,
+    params.status !== "all" ? eq(forms.status, params.status as "draft") : undefined,
+    params.query ? ilike(forms.name, `%${params.query}%`) : undefined,
+  ].filter(Boolean);
+
+  const rows = await database
+    .select({
+      id: forms.id,
+      name: forms.name,
+      organizationId: forms.organizationId,
+      organizationName: organizations.name,
+      slug: forms.slug,
+      status: forms.status,
+      updatedAt: forms.updatedAt,
+      websiteId: forms.websiteId,
+      websiteName: websites.name,
+    })
+    .from(forms)
+    .innerJoin(organizations, eq(forms.organizationId, organizations.id))
+    .innerJoin(websites, eq(forms.websiteId, websites.id))
+    .where(and(...conditions))
+    .orderBy(desc(forms.updatedAt))
+    .limit(limit)
+    .offset(offset);
+
+  return { items: rows, page: params.page };
+}
+
+export async function getSubmissions({
+  database,
+  params,
+  request,
+}: {
+  database: Database;
+  params: DashboardSearchParams & { formId?: string; websiteId?: string };
+  request: DashboardRequest;
+}) {
+  assertDashboardPermission(request, "forms:read", params.organizationId);
+  const { limit, offset } = getPagination(params);
+  const orgIds = scopedOrgIds(request);
+  const conditions = [
+    isNull(formSubmissions.deletedAt),
+    params.organizationId ? eq(formSubmissions.organizationId, params.organizationId) : undefined,
+    params.websiteId ? eq(formSubmissions.websiteId, params.websiteId) : undefined,
+    params.formId ? eq(formSubmissions.formId, params.formId) : undefined,
+    orgIds ? inArray(formSubmissions.organizationId, orgIds) : undefined,
+    params.status !== "all" ? eq(formSubmissions.status, params.status as SubmissionStatus) : undefined,
+  ].filter(Boolean);
+
+  const rows = await database
+    .select({
+      formId: formSubmissions.formId,
+      formName: forms.name,
+      id: formSubmissions.id,
+      organizationId: formSubmissions.organizationId,
+      organizationName: organizations.name,
+      status: formSubmissions.status,
+      submittedAt: formSubmissions.submittedAt,
+      websiteId: formSubmissions.websiteId,
+      websiteName: websites.name,
+    })
+    .from(formSubmissions)
+    .innerJoin(forms, eq(formSubmissions.formId, forms.id))
+    .innerJoin(organizations, eq(formSubmissions.organizationId, organizations.id))
+    .innerJoin(websites, eq(formSubmissions.websiteId, websites.id))
+    .where(and(...conditions))
+    .orderBy(desc(formSubmissions.submittedAt))
+    .limit(limit)
+    .offset(offset);
+
+  return { items: rows, page: params.page };
+}
+
+export async function requireSubmissionAccess({
+  database,
+  request,
+  submissionId,
+}: {
+  database: Database;
+  request: DashboardRequest;
+  submissionId: string;
+}) {
+  const submission = await database.query.formSubmissions.findFirst({
+    where: and(eq(formSubmissions.id, submissionId), isNull(formSubmissions.deletedAt)),
+    with: { form: true, organization: true, website: true },
+  });
+
+  if (!submission) {
+    throw new FormValidationError("Submission was not found.");
+  }
+
+  assertDashboardPermission(request, "forms:read", submission.organizationId);
+  return submission;
+}
+
+export async function updateSubmissionStatus({
+  database,
+  request,
+  status,
+  submissionId,
+}: {
+  database: Database;
+  request: DashboardRequest;
+  status: SubmissionStatus;
+  submissionId: string;
+}) {
+  const submission = await requireSubmissionAccess({ database, request, submissionId });
+  assertDashboardPermission(request, "forms:manage", submission.organizationId);
+  const now = new Date();
+  const [updated] = await database
+    .update(formSubmissions)
+    .set({
+      archivedAt: status === "archived" ? now : submission.archivedAt,
+      readAt: status === "read" ? now : submission.readAt,
+      spamAt: status === "spam" ? now : submission.spamAt,
+      status,
+      updatedAt: now,
+    })
+    .where(eq(formSubmissions.id, submission.id))
+    .returning();
+
+  await database.insert(auditLogs).values({
+    action:
+      status === "read"
+        ? "submission.marked_read"
+        : status === "archived"
+          ? "submission.archived"
+          : status === "spam"
+            ? "submission.marked_spam"
+            : "submission.updated",
+    actorUserId: request.context.user.id,
+    metadata: { formId: submission.formId },
+    organizationId: submission.organizationId,
+    resourceId: submission.id,
+    resourceType: "form_submission",
+  });
+
+  return updated;
+}
+
+export async function getWebsiteOperationalSummary({
+  database,
+  request,
+  websiteId,
+}: {
+  database: Database;
+  request: DashboardRequest;
+  websiteId: string;
+}) {
+  const website = await requireWebsiteAccess({ database, request, websiteId });
+  const [mediaCount, missingAlt, activeForms, unreadSubmissions, draftPages, draftPosts] =
+    await Promise.all([
+      database.select({ value: sql<number>`count(*)` }).from(mediaAssets).where(and(eq(mediaAssets.websiteId, website.id), isNull(mediaAssets.deletedAt))),
+      database.select({ value: sql<number>`count(*)` }).from(mediaAssets).where(and(eq(mediaAssets.websiteId, website.id), ilike(mediaAssets.mimeType, "image/%"), isNull(mediaAssets.altText), isNull(mediaAssets.deletedAt))),
+      database.select({ value: sql<number>`count(*)` }).from(forms).where(and(eq(forms.websiteId, website.id), eq(forms.status, "published"), isNull(forms.deletedAt))),
+      database.select({ value: sql<number>`count(*)` }).from(formSubmissions).where(and(eq(formSubmissions.websiteId, website.id), eq(formSubmissions.status, "new"), isNull(formSubmissions.deletedAt))),
+      database.select({ value: sql<number>`count(*)` }).from(pages).where(and(eq(pages.websiteId, website.id), eq(pages.status, "draft"), isNull(pages.deletedAt))),
+      database.select({ value: sql<number>`count(*)` }).from(posts).where(and(eq(posts.websiteId, website.id), eq(posts.status, "draft"), isNull(posts.deletedAt))),
+    ]);
+
+  return {
+    activeForms: activeForms[0]?.value ?? 0,
+    draftContent: (draftPages[0]?.value ?? 0) + (draftPosts[0]?.value ?? 0),
+    mediaCount: mediaCount[0]?.value ?? 0,
+    missingAlt: missingAlt[0]?.value ?? 0,
+    unreadSubmissions: unreadSubmissions[0]?.value ?? 0,
+  };
+}
+
+export async function getContentOperationsV2({
+  database,
+  params,
+  request,
+}: {
+  database: Database;
+  params: DashboardSearchParams & { contentType?: string; websiteId?: string };
+  request: DashboardRequest;
+}) {
+  assertDashboardPermission(request, "cms:read", params.organizationId);
+  const orgIds = scopedOrgIds(request);
+  const includePages = !params.contentType || params.contentType === "all" || params.contentType === "page";
+  const includePosts = !params.contentType || params.contentType === "all" || params.contentType === "post";
+  const pageConditions = [
+    isNull(pages.deletedAt),
+    params.organizationId ? eq(pages.organizationId, params.organizationId) : undefined,
+    params.websiteId ? eq(pages.websiteId, params.websiteId) : undefined,
+    orgIds ? inArray(pages.organizationId, orgIds) : undefined,
+    params.status !== "all" ? eq(pages.status, params.status as "draft") : undefined,
+    params.query ? ilike(pages.title, `%${params.query}%`) : undefined,
+  ].filter(Boolean);
+  const postConditions = [
+    isNull(posts.deletedAt),
+    params.organizationId ? eq(posts.organizationId, params.organizationId) : undefined,
+    params.websiteId ? eq(posts.websiteId, params.websiteId) : undefined,
+    orgIds ? inArray(posts.organizationId, orgIds) : undefined,
+    params.status !== "all" ? eq(posts.status, params.status as "draft") : undefined,
+    params.query ? ilike(posts.title, `%${params.query}%`) : undefined,
+  ].filter(Boolean);
+
+  const [pageRows, postRows] = await Promise.all([
+    includePages
+      ? database
+          .select({
+            id: pages.id,
+            organizationId: pages.organizationId,
+            slug: pages.slug,
+            status: pages.status,
+            title: pages.title,
+            type: sql<"page">`'page'`,
+            updatedAt: pages.updatedAt,
+            websiteId: pages.websiteId,
+          })
+          .from(pages)
+          .where(and(...pageConditions))
+          .orderBy(desc(pages.updatedAt))
+          .limit(30)
+      : [],
+    includePosts
+      ? database
+          .select({
+            id: posts.id,
+            organizationId: posts.organizationId,
+            slug: posts.slug,
+            status: posts.status,
+            title: posts.title,
+            type: sql<"post">`'post'`,
+            updatedAt: posts.updatedAt,
+            websiteId: posts.websiteId,
+          })
+          .from(posts)
+          .where(and(...postConditions))
+          .orderBy(desc(posts.updatedAt))
+          .limit(30)
+      : [],
+  ]);
+
+  const items = [...pageRows, ...postRows].sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+  return { items, page: params.page };
+}
+
+export function normalizeSubmissionData({
+  fields,
+  payload,
+}: {
+  fields: { name: string; required: boolean; type: string }[];
+  payload: Record<string, unknown>;
+}) {
+  const allowed = new Set(fields.map((field) => field.name));
+  const normalized: Record<string, string | string[] | boolean> = {};
+
+  for (const key of Object.keys(payload)) {
+    if (key === "_hp") continue;
+    if (!allowed.has(key)) {
+      throw new FormValidationError(`Unknown field "${key}" was submitted.`);
+    }
+  }
+
+  for (const field of fields) {
+    const value = payload[field.name];
+    if (field.required && (value === undefined || value === "" || value === false)) {
+      throw new FormValidationError(`${field.name} is required.`);
+    }
+
+    if (value === undefined) continue;
+    normalized[field.name] =
+      typeof value === "boolean"
+        ? value
+        : Array.isArray(value)
+          ? value.map(safeString).slice(0, 20)
+          : safeString(value).slice(0, 5000);
+  }
+
+  return normalized;
+}

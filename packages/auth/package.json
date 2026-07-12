@@ -1,0 +1,45 @@
+{
+  "name": "@agency/auth",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./bootstrap": "./src/bootstrap.ts",
+    "./guards": "./src/guards.ts",
+    "./middleware": "./src/middleware.ts",
+    "./organizations": "./src/organizations.ts",
+    "./permissions": "./src/permissions.ts",
+    "./redirects": "./src/redirects.ts",
+    "./server": "./src/server.ts",
+    "./session": "./src/session.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@agency/database": "workspace:*",
+    "@better-auth/drizzle-adapter": "^1.6.23",
+    "better-auth": "^1.6.23",
+    "drizzle-orm": "^0.45.2",
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "@agency/eslint-config": "workspace:*",
+    "@agency/typescript-config": "workspace:*",
+    "@types/node": "^24.13.3",
+    "eslint": "^9.39.4",
+    "next": "^15.5.0",
+    "react": "^19.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "next": "^15.0.0",
+    "react": "^19.0.0"
+  }
+}

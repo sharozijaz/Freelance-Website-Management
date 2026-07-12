@@ -1,0 +1,12 @@
+{
+  "extends": "@agency/typescript-config/base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@agency/auth/*": ["./src/*"],
+      "@agency/database/*": ["../database/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules"]
+}

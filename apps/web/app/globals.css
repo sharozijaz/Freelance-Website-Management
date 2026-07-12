@@ -1,0 +1,5 @@
+@import "@agency/ui/styles";
+
+@source "../../../packages/ui/src/**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";
+@source "../features/**/*.{ts,tsx}";

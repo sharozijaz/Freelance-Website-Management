@@ -4,6 +4,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
+      "@agency/auth/*": ["../../packages/auth/src/*"],
+      "@agency/database/*": ["../../packages/database/src/*"],
       "@agency/ui/*": ["../../packages/ui/src/*"],
       "@agency/lib/*": ["../../packages/lib/src/*"],
       "@agency/types/*": ["../../packages/types/src/*"]

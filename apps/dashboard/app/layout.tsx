@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { DashboardShell } from "@/components/dashboard-shell";
+import { database } from "@/lib/auth";
+import { createDashboardRequest } from "@/lib/dashboard/access";
+import { getDashboardShellData } from "@/lib/dashboard/queries";
+import { getDashboardSessionContext } from "@/lib/session";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,17 +16,25 @@ interface RootLayoutProps {
   children: ReactNode;
 }
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default async function RootLayout({ children }: RootLayoutProps) {
+  const context = await getDashboardSessionContext();
+  const shellData = context
+    ? await getDashboardShellData({
+        database,
+        request: createDashboardRequest(context),
+      })
+    : { accessibleOrganizations: [], activeOrganization: null };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <div className="min-h-screen lg:grid lg:grid-cols-[16rem_1fr]">
-          <aside className="border-r bg-muted p-4">Sidebar placeholder</aside>
-          <div>
-            <header className="border-b p-4">Header placeholder</header>
-            {children}
-          </div>
-        </div>
+        <DashboardShell
+          activeOrganization={shellData.activeOrganization}
+          context={context}
+          organizations={shellData.accessibleOrganizations}
+        >
+          {children}
+        </DashboardShell>
       </body>
     </html>
   );

@@ -4,7 +4,10 @@
     "baseUrl": ".",
     "noEmit": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@agency/auth/*": ["../../packages/auth/src/*"],
+      "@agency/database/*": ["../../packages/database/src/*"],
+      "@agency/lib/*": ["../../packages/lib/src/*"]
     }
   },
   "include": ["src/**/*.ts"],

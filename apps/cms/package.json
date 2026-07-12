@@ -7,10 +7,17 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc --noEmit",
     "lint": "eslint .",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "payload": "^3.50.0"
+    "@agency/auth": "workspace:*",
+    "@agency/database": "workspace:*",
+    "@agency/lib": "workspace:*",
+    "@payloadcms/db-postgres": "^3.85.2",
+    "@payloadcms/richtext-lexical": "^3.85.2",
+    "payload": "^3.50.0",
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "@agency/eslint-config": "workspace:*",
@@ -18,6 +25,7 @@
     "@types/node": "^24.1.0",
     "eslint": "^9.31.0",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }

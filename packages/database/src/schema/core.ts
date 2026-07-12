@@ -11,9 +11,12 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import {
+  deploymentEnvironmentEnum,
+  deploymentProviderEnum,
   deploymentStatusEnum,
   dnsStateEnum,
   domainVerificationStatusEnum,
+  hostingConnectionStatusEnum,
   invitationStatusEnum,
   membershipRoleEnum,
   membershipStatusEnum,
@@ -61,6 +64,7 @@ export const users = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name"),
     email: text("email").notNull(),
+    emailVerified: boolean("email_verified").notNull().default(false),
     status: userStatusEnum("status").notNull().default("invited"),
     profile: jsonb("profile").$type<Record<string, unknown>>().notNull().default({}),
     timezone: text("timezone").notNull().default("UTC"),
@@ -74,6 +78,69 @@ export const users = pgTable(
     uniqueIndex("users_email_idx").on(table.email),
     index("users_status_idx").on(table.status),
     index("users_deleted_at_idx").on(table.deletedAt),
+  ],
+);
+
+export const authSessions = pgTable(
+  "auth_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    token: text("token").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    activeOrganizationId: uuid("active_organization_id").references(() => organizations.id, {
+      onDelete: "set null",
+    }),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("auth_sessions_token_idx").on(table.token),
+    index("auth_sessions_user_idx").on(table.userId),
+    index("auth_sessions_active_organization_idx").on(table.activeOrganizationId),
+    index("auth_sessions_expires_at_idx").on(table.expiresAt),
+  ],
+);
+
+export const authAccounts = pgTable(
+  "auth_accounts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    accountId: text("account_id").notNull(),
+    providerId: text("provider_id").notNull(),
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true }),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true }),
+    scope: text("scope"),
+    idToken: text("id_token"),
+    password: text("password"),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("auth_accounts_provider_account_idx").on(table.providerId, table.accountId),
+    index("auth_accounts_user_idx").on(table.userId),
+  ],
+);
+
+export const authVerifications = pgTable(
+  "auth_verifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    identifier: text("identifier").notNull(),
+    value: text("value").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    index("auth_verifications_identifier_idx").on(table.identifier),
+    index("auth_verifications_expires_at_idx").on(table.expiresAt),
   ],
 );
 
@@ -148,6 +215,22 @@ export const domains = pgTable(
     isPrimary: boolean("is_primary").notNull().default(false),
     dnsState: dnsStateEnum("dns_state").notNull().default("unknown"),
     sslState: sslStateEnum("ssl_state").notNull().default("not_requested"),
+    providerConnectionId: uuid("provider_connection_id"),
+    providerDomainId: text("provider_domain_id"),
+    requiredDnsRecords: jsonb("required_dns_records")
+      .$type<
+        {
+          name: string;
+          priority?: number | null;
+          purpose?: string | null;
+          ttl?: number | null;
+          type: string;
+          value: string;
+        }[]
+      >()
+      .notNull()
+      .default([]),
+    lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
     vercelDomainId: text("vercel_domain_id"),
     ...timestamps,
     ...softDelete,
@@ -157,6 +240,79 @@ export const domains = pgTable(
     index("domains_organization_website_idx").on(table.organizationId, table.websiteId),
     index("domains_organization_primary_idx").on(table.organizationId, table.isPrimary),
     index("domains_verification_status_idx").on(table.verificationStatus),
+  ],
+);
+
+export const hostingProviderConnections = pgTable(
+  "hosting_provider_connections",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    websiteId: uuid("website_id")
+      .notNull()
+      .references(() => websites.id, { onDelete: "cascade" }),
+    provider: deploymentProviderEnum("provider").notNull(),
+    status: hostingConnectionStatusEnum("status").notNull().default("not_connected"),
+    providerProjectId: text("provider_project_id"),
+    providerTeamId: text("provider_team_id"),
+    credentialReference: text("credential_reference"),
+    dashboardUrl: text("dashboard_url"),
+    productionUrl: text("production_url"),
+    deploymentMethod: text("deployment_method"),
+    notes: text("notes"),
+    configuration: jsonb("configuration").$type<Record<string, unknown>>().notNull().default({}),
+    lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }),
+    ...timestamps,
+    ...softDelete,
+  },
+  (table) => [
+    uniqueIndex("hosting_connections_website_provider_idx").on(table.websiteId, table.provider),
+    index("hosting_connections_organization_idx").on(table.organizationId),
+    index("hosting_connections_status_idx").on(table.status),
+  ],
+);
+
+export const deployments = pgTable(
+  "deployments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    websiteId: uuid("website_id")
+      .notNull()
+      .references(() => websites.id, { onDelete: "cascade" }),
+    providerConnectionId: uuid("provider_connection_id").references(
+      () => hostingProviderConnections.id,
+      { onDelete: "set null" },
+    ),
+    provider: deploymentProviderEnum("provider").notNull(),
+    providerDeploymentId: text("provider_deployment_id"),
+    environment: deploymentEnvironmentEnum("environment").notNull().default("production"),
+    status: deploymentStatusEnum("status").notNull().default("unknown"),
+    deploymentUrl: text("deployment_url"),
+    isProduction: boolean("is_production").notNull().default(false),
+    triggeredByUserId: uuid("triggered_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    failureSummary: text("failure_summary"),
+    notes: text("notes"),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    providerCreatedAt: timestamp("provider_created_at", { withTimezone: true }),
+    synchronizedAt: timestamp("synchronized_at", { withTimezone: true }),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    ...timestamps,
+    ...softDelete,
+  },
+  (table) => [
+    uniqueIndex("deployments_provider_deployment_idx").on(table.provider, table.providerDeploymentId),
+    index("deployments_organization_website_idx").on(table.organizationId, table.websiteId),
+    index("deployments_website_status_idx").on(table.websiteId, table.status),
+    index("deployments_provider_connection_idx").on(table.providerConnectionId),
+    index("deployments_created_at_idx").on(table.createdAt),
   ],
 );
 
@@ -268,6 +424,8 @@ export const auditLogs = pgTable(
 export const organizationRelations = relations(organizations, ({ many }) => ({
   auditLogs: many(auditLogs),
   domains: many(domains),
+  deployments: many(deployments),
+  hostingProviderConnections: many(hostingProviderConnections),
   invitations: many(invitations),
   memberships: many(memberships),
   projectAssignments: many(projectAssignments),
@@ -277,10 +435,30 @@ export const organizationRelations = relations(organizations, ({ many }) => ({
 
 export const userRelations = relations(users, ({ many }) => ({
   acceptedInvitations: many(invitations, { relationName: "acceptedInvitations" }),
+  authAccounts: many(authAccounts),
+  authSessions: many(authSessions),
   assignedProjects: many(projectAssignments, { relationName: "assignedProjects" }),
   auditLogs: many(auditLogs),
   invitationsSent: many(invitations, { relationName: "invitationsSent" }),
   memberships: many(memberships),
+}));
+
+export const authSessionRelations = relations(authSessions, ({ one }) => ({
+  activeOrganization: one(organizations, {
+    fields: [authSessions.activeOrganizationId],
+    references: [organizations.id],
+  }),
+  user: one(users, {
+    fields: [authSessions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const authAccountRelations = relations(authAccounts, ({ one }) => ({
+  user: one(users, {
+    fields: [authAccounts.userId],
+    references: [users.id],
+  }),
 }));
 
 export const membershipRelations = relations(memberships, ({ one }) => ({
@@ -295,7 +473,9 @@ export const membershipRelations = relations(memberships, ({ one }) => ({
 }));
 
 export const websiteRelations = relations(websites, ({ many, one }) => ({
+  deployments: many(deployments),
   domains: many(domains),
+  hostingProviderConnections: many(hostingProviderConnections),
   organization: one(organizations, {
     fields: [websites.organizationId],
     references: [organizations.id],
@@ -304,12 +484,50 @@ export const websiteRelations = relations(websites, ({ many, one }) => ({
 }));
 
 export const domainRelations = relations(domains, ({ one }) => ({
+  providerConnection: one(hostingProviderConnections, {
+    fields: [domains.providerConnectionId],
+    references: [hostingProviderConnections.id],
+  }),
   organization: one(organizations, {
     fields: [domains.organizationId],
     references: [organizations.id],
   }),
   website: one(websites, {
     fields: [domains.websiteId],
+    references: [websites.id],
+  }),
+}));
+
+export const hostingProviderConnectionRelations = relations(
+  hostingProviderConnections,
+  ({ many, one }) => ({
+    deployments: many(deployments),
+    organization: one(organizations, {
+      fields: [hostingProviderConnections.organizationId],
+      references: [organizations.id],
+    }),
+    website: one(websites, {
+      fields: [hostingProviderConnections.websiteId],
+      references: [websites.id],
+    }),
+  }),
+);
+
+export const deploymentRelations = relations(deployments, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [deployments.organizationId],
+    references: [organizations.id],
+  }),
+  providerConnection: one(hostingProviderConnections, {
+    fields: [deployments.providerConnectionId],
+    references: [hostingProviderConnections.id],
+  }),
+  triggeredBy: one(users, {
+    fields: [deployments.triggeredByUserId],
+    references: [users.id],
+  }),
+  website: one(websites, {
+    fields: [deployments.websiteId],
     references: [websites.id],
   }),
 }));

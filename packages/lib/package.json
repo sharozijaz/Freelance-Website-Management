@@ -6,10 +6,13 @@
   "exports": {
     ".": "./src/index.ts",
     "./env": "./src/env.ts",
+    "./preview": "./src/preview.ts",
+    "./seo": "./src/seo.ts",
     "./utils": "./src/utils.ts"
   },
   "scripts": {
     "lint": "eslint .",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit"
   },
@@ -21,7 +24,9 @@
   "devDependencies": {
     "@agency/eslint-config": "workspace:*",
     "@agency/typescript-config": "workspace:*",
+    "@types/node": "^24.1.0",
     "eslint": "^9.31.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }
