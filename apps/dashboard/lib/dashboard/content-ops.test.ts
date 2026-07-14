@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   FormValidationError,
+  getFormTemplateFields,
   getMediaType,
   normalizeFormField,
+  parseFormFieldDefinitions,
   normalizeSubmissionData,
   validateSafeRedirect,
 } from "./content-ops";
@@ -35,6 +37,69 @@ describe("content operations utilities", () => {
     expect(() => normalizeFormField({ label: "Topic", type: "select" })).toThrow(
       FormValidationError,
     );
+  });
+
+  it("builds contact and catering form templates with stable public field names", () => {
+    expect(getFormTemplateFields("contact").map((field) => field.name)).toEqual([
+      "name",
+      "email",
+      "topic",
+      "message",
+    ]);
+
+    expect(getFormTemplateFields("catering").map((field) => field.name)).toEqual([
+      "name",
+      "email",
+      "phone",
+      "eventDate",
+      "guestCount",
+      "serviceStyle",
+      "notes",
+    ]);
+
+    expect(
+      getFormTemplateFields("catering").find((field) => field.name === "serviceStyle"),
+    ).toMatchObject({
+      options: [
+        { label: "Buffet", value: "buffet" },
+        { label: "Boxed", value: "boxed" },
+        { label: "Family style", value: "family-style" },
+        { label: "Staffed", value: "staffed" },
+      ],
+    });
+  });
+
+  it("parses custom public form field definitions", () => {
+    expect(
+      parseFormFieldDefinitions(
+        [
+          "name | Name | text | required",
+          "topic | Topic | select | required | general:General question,feedback:Feedback",
+        ].join("\n"),
+      ),
+    ).toEqual([
+      {
+        helpText: null,
+        label: "Name",
+        name: "name",
+        options: [],
+        placeholder: null,
+        required: true,
+        type: "text",
+      },
+      {
+        helpText: null,
+        label: "Topic",
+        name: "topic",
+        options: [
+          { label: "General question", value: "general" },
+          { label: "Feedback", value: "feedback" },
+        ],
+        placeholder: null,
+        required: true,
+        type: "select",
+      },
+    ]);
   });
 
   it("allowlists submission fields", () => {

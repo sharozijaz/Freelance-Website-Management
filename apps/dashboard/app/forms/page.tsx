@@ -85,6 +85,21 @@ export default async function FormsPage({
                 <Input id="name" name="name" required />
               </div>
               <div>
+                <Label htmlFor="formTemplate">Field template</Label>
+                <select
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  defaultValue="custom"
+                  id="formTemplate"
+                  name="formTemplate"
+                >
+                  <option value="custom">Custom fields below</option>
+                  <option value="contact">Contact: name, email, topic, message</option>
+                  <option value="catering">
+                    Catering: name, email, phone, event date, guests, style, notes
+                  </option>
+                </select>
+              </div>
+              <div>
                 <Label htmlFor="successMessage">Success message</Label>
                 <Input id="successMessage" name="successMessage" />
               </div>
@@ -93,11 +108,15 @@ export default async function FormsPage({
                 <Input id="redirectUrl" name="redirectUrl" />
               </div>
               <div>
-                <Label htmlFor="fieldLabel">First field label</Label>
+                <Label htmlFor="fieldName">Single field name</Label>
+                <Input defaultValue="email" id="fieldName" name="fieldName" />
+              </div>
+              <div>
+                <Label htmlFor="fieldLabel">Single field label</Label>
                 <Input defaultValue="Email" id="fieldLabel" name="fieldLabel" />
               </div>
               <div>
-                <Label htmlFor="fieldType">First field type</Label>
+                <Label htmlFor="fieldType">Single field type</Label>
                 <select
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                   id="fieldType"
@@ -107,12 +126,32 @@ export default async function FormsPage({
                   <option value="text">Text</option>
                   <option value="textarea">Textarea</option>
                   <option value="phone">Phone</option>
+                  <option value="select">Select</option>
+                  <option value="checkbox">Checkbox</option>
                 </select>
               </div>
               <label className="flex items-end gap-2 pb-2 text-sm">
                 <input defaultChecked name="fieldRequired" type="checkbox" value="true" />
                 Required
               </label>
+              <div className="xl:col-span-4">
+                <Label htmlFor="fieldDefinitions">Custom field definitions</Label>
+                <textarea
+                  className="min-h-32 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  id="fieldDefinitions"
+                  name="fieldDefinitions"
+                  placeholder={[
+                    "name | Name | text | required",
+                    "email | Email | email | required",
+                    "topic | Topic | select | required | general:General question,feedback:Feedback",
+                    "message | Message | textarea | required",
+                  ].join("\n")}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Format: name | Label | type | required | value:Label,value:Label. Templates ignore
+                  this box.
+                </p>
+              </div>
               <Button className="self-end" type="submit">
                 Create Form
               </Button>

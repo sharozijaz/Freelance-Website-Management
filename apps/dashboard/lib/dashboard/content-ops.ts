@@ -35,6 +35,7 @@ export const formFieldTypes = [
 
 export type FormFieldType = (typeof formFieldTypes)[number];
 export type SubmissionStatus = "archived" | "new" | "read" | "spam";
+export type FormTemplate = "catering" | "contact" | "custom";
 
 export class FormValidationError extends Error {
   constructor(message: string) {
@@ -147,9 +148,13 @@ export function normalizeFormField(input: {
   }
 
   const label = input.label.trim();
-  const name = normalizeOrganizationSlug(input.name ?? label).replaceAll("-", "_");
+  const explicitName = input.name?.trim();
+  let name = normalizeOrganizationSlug(label).replaceAll("-", "_");
+  if (explicitName !== undefined && explicitName !== "") {
+    name = explicitName;
+  }
 
-  if (!name || !/^[a-z][a-z0-9_]*$/.test(name)) {
+  if (!name || !/^[A-Za-z][A-Za-z0-9_]*$/.test(name)) {
     throw new FormValidationError(
       "Field name must start with a letter and use letters, numbers, or underscores.",
     );
@@ -183,6 +188,119 @@ export function normalizeFormField(input: {
     required: Boolean(input.required),
     type: input.type as FormFieldType,
   };
+}
+
+const publicFormFieldTypes = ["text", "email", "phone", "textarea", "select", "checkbox"] as const;
+
+export function getFormTemplateFields(template: FormTemplate) {
+  if (template === "contact") {
+    return [
+      normalizeFormField({ label: "Name", name: "name", required: true, type: "text" }),
+      normalizeFormField({ label: "Email", name: "email", required: true, type: "email" }),
+      normalizeFormField({
+        label: "Topic",
+        name: "topic",
+        options: [
+          { label: "General question", value: "general" },
+          { label: "Takeaway", value: "takeaway" },
+          { label: "Feedback", value: "feedback" },
+          { label: "Partnership", value: "partnership" },
+        ],
+        required: true,
+        type: "select",
+      }),
+      normalizeFormField({ label: "Message", name: "message", required: true, type: "textarea" }),
+    ];
+  }
+
+  if (template === "catering") {
+    return [
+      normalizeFormField({ label: "Name", name: "name", required: true, type: "text" }),
+      normalizeFormField({ label: "Email", name: "email", required: true, type: "email" }),
+      normalizeFormField({ label: "Phone", name: "phone", required: true, type: "phone" }),
+      normalizeFormField({ label: "Event date", name: "eventDate", required: true, type: "text" }),
+      normalizeFormField({
+        label: "Guest count",
+        name: "guestCount",
+        required: true,
+        type: "text",
+      }),
+      normalizeFormField({
+        label: "Service style",
+        name: "serviceStyle",
+        options: [
+          { label: "Buffet", value: "buffet" },
+          { label: "Boxed", value: "boxed" },
+          { label: "Family style", value: "family-style" },
+          { label: "Staffed", value: "staffed" },
+        ],
+        required: true,
+        type: "select",
+      }),
+      normalizeFormField({ label: "Notes", name: "notes", required: false, type: "textarea" }),
+    ];
+  }
+
+  return [];
+}
+
+function parseRequiredFlag(value: string | undefined) {
+  return ["1", "required", "true", "yes"].includes((value ?? "").trim().toLowerCase());
+}
+
+function parseOptionDefinitions(value: string | undefined) {
+  if (!value?.trim()) return [];
+
+  return value
+    .split(",")
+    .map((option) => option.trim())
+    .filter(Boolean)
+    .map((option) => {
+      const [rawValue, rawLabel] = option.split(":");
+      const optionValue = rawValue?.trim() ?? "";
+      const trimmedLabel = rawLabel?.trim();
+      let optionLabel = optionValue;
+      if (trimmedLabel !== undefined && trimmedLabel !== "") {
+        optionLabel = trimmedLabel;
+      }
+
+      return {
+        label: optionLabel,
+        value: optionValue,
+      };
+    });
+}
+
+export function parseFormFieldDefinitions(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"))
+    .map((line) => {
+      const [name, label, type = "text", required, options] = line
+        .split("|")
+        .map((part) => part.trim());
+
+      if (!name || !label) {
+        throw new FormValidationError(
+          "Each field line must use: name | Label | type | required | options.",
+        );
+      }
+
+      if (!publicFormFieldTypes.includes(type as (typeof publicFormFieldTypes)[number])) {
+        throw new FormValidationError(
+          "Public form fields support text, email, phone, textarea, select, and checkbox.",
+        );
+      }
+
+      return normalizeFormField({
+        label,
+        name,
+        options: parseOptionDefinitions(options),
+        required: parseRequiredFlag(required),
+        type,
+      });
+    });
 }
 
 export async function createForm({

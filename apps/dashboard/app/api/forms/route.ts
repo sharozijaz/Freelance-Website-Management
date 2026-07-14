@@ -1,7 +1,13 @@
 import { redirect } from "next/navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
-import { createForm, normalizeFormField } from "@/lib/dashboard/content-ops";
+import {
+  createForm,
+  getFormTemplateFields,
+  normalizeFormField,
+  parseFormFieldDefinitions,
+  type FormTemplate,
+} from "@/lib/dashboard/content-ops";
 import { toSafeErrorMessage } from "@/lib/errors";
 import { requireDashboardSessionContext } from "@/lib/session";
 
@@ -26,16 +32,24 @@ export async function POST(request: Request) {
       throw new Error("Website is required.");
     }
 
+    const template = (stringValue(formData, "formTemplate") ?? "custom") as FormTemplate;
+    const fieldDefinitions = stringValue(formData, "fieldDefinitions");
     const fieldLabel = stringValue(formData, "fieldLabel");
-    const fields = fieldLabel
-      ? [
-          normalizeFormField({
-            label: fieldLabel,
-            required: formData.get("fieldRequired") === "true",
-            type: stringValue(formData, "fieldType") ?? "email",
-          }),
-        ]
-      : [];
+    const fields =
+      template === "contact" || template === "catering"
+        ? getFormTemplateFields(template)
+        : fieldDefinitions
+          ? parseFormFieldDefinitions(fieldDefinitions)
+          : fieldLabel
+            ? [
+                normalizeFormField({
+                  label: fieldLabel,
+                  name: stringValue(formData, "fieldName"),
+                  required: formData.get("fieldRequired") === "true",
+                  type: stringValue(formData, "fieldType") ?? "email",
+                }),
+              ]
+            : [];
 
     await createForm({
       database,
