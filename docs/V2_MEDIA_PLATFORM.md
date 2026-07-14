@@ -134,3 +134,18 @@ Audit metadata includes only safe identifiers, MIME type, website ID, and lifecy
 ## Future Provider Boundary
 
 A future storage provider can add upload, signed internal storage, transformations, or deletion behind the Media service. The Platform API should continue returning only safe public media metadata and must not expose provider secrets or raw storage internals.
+
+## Deferred Storage Decision
+
+When the core platform feature set is complete, revisit the production media storage strategy before allowing broad client uploads. The preferred direction is object storage rather than storing client files on the application host.
+
+Items to evaluate later:
+
+- Cloudflare R2 or another S3-compatible object storage provider for uploaded images, PDFs, and documents.
+- CDN delivery in front of stored media.
+- Per-client storage quotas such as starter, growth, pro, and custom limits.
+- Billing and usage reporting for agency-owned storage.
+- Video policy, including whether videos should be limited, embedded from third-party platforms, or handled by a dedicated video service.
+- Migration path from externally registered media URLs to platform-owned storage objects.
+
+This is intentionally deferred until Blog, Forms, Media metadata, SEO, and connected website workflows are stable enough to justify storage-provider integration.

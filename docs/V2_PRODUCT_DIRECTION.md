@@ -299,6 +299,8 @@ Scope:
 
 - media manager polish
 - image metadata
+- deferred object storage decision for Cloudflare R2 or another S3-compatible provider
+- per-client storage quotas and video upload policy
 - reusable content snippets
 - business info
 - testimonials
@@ -370,4 +372,3 @@ Dashboard content management
 -> custom-coded website
 -> client-managed updates
 ```
-
