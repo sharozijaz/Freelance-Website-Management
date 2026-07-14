@@ -1,7 +1,17 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Suspense } from "react";
 import { FileText, Globe2, Images, Inbox, Send } from "lucide-react";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState } from "@agency/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  EmptyState,
+  Skeleton,
+} from "@agency/ui";
 import { websiteTypeDescriptions, websiteTypeLabels, websiteTypes } from "@agency/lib/modules";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
@@ -10,8 +20,8 @@ import { createDashboardRequest } from "@/lib/dashboard/access";
 import { presentAuditLog } from "@/lib/dashboard/activity";
 import { getWebsiteOperationalSummary } from "@/lib/dashboard/content-ops";
 import { formatDashboardDateTime } from "@/lib/dashboard/dates";
-import { isWebsiteModuleEnabled } from "@/lib/dashboard/modules";
 import { getWebsiteDetail, projectStatusLabels } from "@/lib/dashboard/projects";
+import type { DashboardRequest } from "@/lib/dashboard/types";
 import { getDashboardSessionContext } from "@/lib/session";
 
 export default async function WebsiteDetailPage({
@@ -30,11 +40,7 @@ export default async function WebsiteDetailPage({
 
   const { websiteId } = await params;
   const request = createDashboardRequest(context);
-  const [detail, operations, blogEnabled] = await Promise.all([
-    getWebsiteDetail({ database, request, websiteId }),
-    getWebsiteOperationalSummary({ database, request, websiteId }),
-    isWebsiteModuleEnabled({ database, moduleKey: "blog", request, websiteId }).catch(() => false),
-  ]);
+  const detail = await getWebsiteDetail({ database, request, websiteId });
   const { project, website } = detail;
   const activity = detail.activity.map(presentAuditLog);
 
@@ -62,7 +68,7 @@ export default async function WebsiteDetailPage({
           <Button asChild size="sm" variant="outline">
             <Link href={`/websites/${website.id}/modules`}>Modules</Link>
           </Button>
-          {website.websiteType === "sharoz_connected" && blogEnabled ? (
+          {website.websiteType === "sharoz_connected" ? (
             <Button asChild size="sm" variant="outline">
               <Link href={`/websites/${website.id}/blog`}>Blog</Link>
             </Button>
@@ -127,38 +133,9 @@ export default async function WebsiteDetailPage({
         </CardContent>
       </Card>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <OperationCard
-          href={`/media?websiteId=${website.id}`}
-          icon={<Images className="size-4" />}
-          label="Media"
-          value={operations.mediaCount.toString()}
-        />
-        <OperationCard
-          href={`/media?websiteId=${website.id}&type=image`}
-          icon={<Images className="size-4" />}
-          label="Missing Alt"
-          value={operations.missingAlt.toString()}
-        />
-        <OperationCard
-          href={`/forms?websiteId=${website.id}`}
-          icon={<Send className="size-4" />}
-          label="Active Forms"
-          value={operations.activeForms.toString()}
-        />
-        <OperationCard
-          href={`/submissions?websiteId=${website.id}&status=new`}
-          icon={<Inbox className="size-4" />}
-          label="Unread"
-          value={operations.unreadSubmissions.toString()}
-        />
-        <OperationCard
-          href={`/content?websiteId=${website.id}&status=draft`}
-          icon={<FileText className="size-4" />}
-          label="Draft Content"
-          value={operations.draftContent.toString()}
-        />
-      </section>
+      <Suspense fallback={<OperationCardsSkeleton />}>
+        <WebsiteOperationCards request={request} websiteId={website.id} />
+      </Suspense>
 
       <section className="grid gap-4 xl:grid-cols-2">
         <Card>
@@ -252,6 +229,67 @@ export default async function WebsiteDetailPage({
         </CardContent>
       </Card>
     </DashboardPage>
+  );
+}
+
+async function WebsiteOperationCards({
+  request,
+  websiteId,
+}: {
+  request: DashboardRequest;
+  websiteId: string;
+}) {
+  const operations = await getWebsiteOperationalSummary({ database, request, websiteId });
+
+  return (
+    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <OperationCard
+        href={`/media?websiteId=${websiteId}`}
+        icon={<Images className="size-4" />}
+        label="Media"
+        value={operations.mediaCount.toString()}
+      />
+      <OperationCard
+        href={`/media?websiteId=${websiteId}&type=image`}
+        icon={<Images className="size-4" />}
+        label="Missing Alt"
+        value={operations.missingAlt.toString()}
+      />
+      <OperationCard
+        href={`/forms?websiteId=${websiteId}`}
+        icon={<Send className="size-4" />}
+        label="Active Forms"
+        value={operations.activeForms.toString()}
+      />
+      <OperationCard
+        href={`/submissions?websiteId=${websiteId}&status=new`}
+        icon={<Inbox className="size-4" />}
+        label="Unread"
+        value={operations.unreadSubmissions.toString()}
+      />
+      <OperationCard
+        href={`/content?websiteId=${websiteId}&status=draft`}
+        icon={<FileText className="size-4" />}
+        label="Draft Content"
+        value={operations.draftContent.toString()}
+      />
+    </section>
+  );
+}
+
+function OperationCardsSkeleton() {
+  return (
+    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      {["Media", "Missing Alt", "Active Forms", "Unread", "Draft Content"].map((label) => (
+        <div className="rounded-lg border border-border bg-surface p-4" key={label}>
+          <div className="flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
+            <Skeleton className="size-4" />
+            <span>{label}</span>
+          </div>
+          <Skeleton className="mt-3 h-7 w-12" />
+        </div>
+      ))}
+    </section>
   );
 }
 

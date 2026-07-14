@@ -189,10 +189,14 @@ export default async function WebsitesPage({
               </span>
               <div className="flex flex-wrap gap-2">
                 <Button asChild size="sm" variant="outline">
-                  <Link href={`/websites/${website.id}`}>Open</Link>
+                  <Link href={`/websites/${website.id}`} prefetch={false}>
+                    Open
+                  </Link>
                 </Button>
                 <Button asChild size="sm" variant="ghost">
-                  <Link href={`/websites/${website.id}/hosting`}>Hosting</Link>
+                  <Link href={`/websites/${website.id}/hosting`} prefetch={false}>
+                    Hosting
+                  </Link>
                 </Button>
               </div>
             </div>
