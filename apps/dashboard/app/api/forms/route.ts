@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { createForm, normalizeFormField } from "@/lib/dashboard/content-ops";
+import { toSafeErrorMessage } from "@/lib/errors";
 import { requireDashboardSessionContext } from "@/lib/session";
 
 function stringValue(formData: FormData, key: string): string | null {
@@ -10,11 +11,15 @@ function stringValue(formData: FormData, key: string): string | null {
 }
 
 export async function POST(request: Request) {
-  const returnTo = "/forms";
+  let returnTo = "/forms";
 
   try {
     const context = await requireDashboardSessionContext();
     const formData = await request.formData();
+    const requestedReturnTo = stringValue(formData, "returnTo");
+    if (requestedReturnTo?.startsWith("/") && !requestedReturnTo.startsWith("//")) {
+      returnTo = requestedReturnTo;
+    }
     const websiteId = stringValue(formData, "websiteId");
 
     if (!websiteId) {
@@ -44,7 +49,7 @@ export async function POST(request: Request) {
       request: createDashboardRequest(context),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Form could not be created.";
+    const message = toSafeErrorMessage(error, "Form could not be created.");
     redirect(`${returnTo}?error=${encodeURIComponent(message)}`);
   }
 

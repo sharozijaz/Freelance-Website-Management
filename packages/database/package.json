@@ -10,10 +10,17 @@
   },
   "scripts": {
     "build": "tsc --noEmit",
+    "db:backup": "tsx scripts/db-backup.ts",
+    "db:backup:status": "tsx scripts/db-backup-status.ts",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config drizzle.config.ts",
+    "db:migration:status": "tsx scripts/db-migration-status.ts",
+    "db:restore": "tsx scripts/db-restore.ts",
+    "db:seed:connected-demo": "tsx scripts/seed-connected-demo.ts",
     "db:studio": "drizzle-kit studio --config drizzle.config.ts",
+    "db:verify-restore": "tsx scripts/db-verify-restore.ts",
     "lint": "eslint .",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -27,6 +34,8 @@
     "@types/node": "^24.13.3",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9.39.4",
-    "typescript": "^5.9.3"
+    "tsx": "^4.23.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   }
 }

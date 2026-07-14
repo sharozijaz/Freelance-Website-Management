@@ -1,5 +1,7 @@
 # Payload CMS Foundation
 
+> **V2 legacy notice:** This document describes the V1 Payload CMS foundation. In V2, Payload is **LIMITED USE / TRANSITIONAL** and must not become the Platform API or the source of public website page section composition. See [ADR-001](adr/ADR-001-V2-PLATFORM-ARCHITECTURE.md) and [V1 Legacy Boundaries](V1_LEGACY_BOUNDARIES.md).
+
 Milestone 6 establishes the Payload CMS architecture for the Agency Website Platform. It does not implement the visual page builder, dashboard screens, website rendering, or business workflows.
 
 ## Architecture

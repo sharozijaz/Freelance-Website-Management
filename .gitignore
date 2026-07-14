@@ -11,6 +11,12 @@ build
 .turbo
 *.tsbuildinfo
 
+# Runtime uploads
+apps/cms/media
+
+# Database backups
+.backups/
+
 # Environment
 .env
 .env.*
@@ -24,6 +30,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+migration-error.txt
+
+# Local deployment bundles/build copies
+deploy-cpanel/
 
 # OS and editors
 .DS_Store

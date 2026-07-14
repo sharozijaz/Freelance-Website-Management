@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { acceptInvitation } from "@agency/auth/organizations";
 import { database } from "@/lib/auth";
+import { toSafeErrorMessage } from "@/lib/errors";
 import { getDashboardSessionContext } from "@/lib/session";
 
 function getRequired(formData: FormData, key: string): string {
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Invitation could not be accepted.";
+    const message = toSafeErrorMessage(error, "Invitation could not be accepted.");
     redirect(`/invite/${token}?error=${encodeURIComponent(message)}`);
   }
 

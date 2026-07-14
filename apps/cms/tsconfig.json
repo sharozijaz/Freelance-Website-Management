@@ -1,15 +1,16 @@
 {
-  "extends": "@agency/typescript-config/base.json",
+  "extends": "@agency/typescript-config/next.json",
   "compilerOptions": {
     "baseUrl": ".",
     "noEmit": true,
     "paths": {
+      "@payload-config": ["./src/payload.config.ts"],
       "@/*": ["./src/*"],
       "@agency/auth/*": ["../../packages/auth/src/*"],
       "@agency/database/*": ["../../packages/database/src/*"],
       "@agency/lib/*": ["../../packages/lib/src/*"]
     }
   },
-  "include": ["src/**/*.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

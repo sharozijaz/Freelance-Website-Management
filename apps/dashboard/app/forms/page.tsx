@@ -1,6 +1,15 @@
 import Link from "next/link";
 import { Send } from "lucide-react";
-import { Button, Card, CardContent, CardHeader, CardTitle, EmptyState, Input, Label } from "@agency/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  EmptyState,
+  Input,
+  Label,
+} from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { FilterBar } from "@/components/filter-bar";
 import { UnauthorizedState } from "@/components/state-panels";
@@ -33,7 +42,10 @@ export default async function FormsPage({
   ]);
 
   return (
-    <DashboardPage description="Website form definitions and submission workflow entry point." title="Forms">
+    <DashboardPage
+      description="Website form definitions and submission workflow entry point."
+      title="Forms"
+    >
       <FilterBar
         defaultQuery={params.query}
         defaultSort={params.sort}
@@ -52,9 +64,16 @@ export default async function FormsPage({
             <form action="/api/forms" className="grid gap-3 xl:grid-cols-4" method="post">
               <div>
                 <Label htmlFor="websiteId">Website</Label>
-                <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" id="websiteId" name="websiteId" required>
+                <select
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  id="websiteId"
+                  name="websiteId"
+                  required
+                >
                   {options.websites.map((website) => (
-                    <option key={website.id} value={website.id}>{website.name}</option>
+                    <option key={website.id} value={website.id}>
+                      {website.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -76,7 +95,11 @@ export default async function FormsPage({
               </div>
               <div>
                 <Label htmlFor="fieldType">First field type</Label>
-                <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" id="fieldType" name="fieldType">
+                <select
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  id="fieldType"
+                  name="fieldType"
+                >
                   <option value="email">Email</option>
                   <option value="text">Text</option>
                   <option value="textarea">Textarea</option>
@@ -87,7 +110,9 @@ export default async function FormsPage({
                 <input defaultChecked name="fieldRequired" type="checkbox" value="true" />
                 Required
               </label>
-              <Button className="self-end" type="submit">Create Form</Button>
+              <Button className="self-end" type="submit">
+                Create Form
+              </Button>
             </form>
           )}
         </CardContent>
@@ -102,7 +127,10 @@ export default async function FormsPage({
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-surface">
           {forms.items.map((form) => (
-            <div className="grid gap-2 border-b border-border p-4 last:border-b-0 md:grid-cols-[1fr_1fr_0.7fr_auto] md:items-center" key={form.id}>
+            <div
+              className="grid gap-2 border-b border-border p-4 last:border-b-0 md:grid-cols-[1fr_1fr_0.7fr_auto] md:items-center"
+              key={form.id}
+            >
               <div>
                 <p className="font-medium">{form.name}</p>
                 <p className="text-sm text-muted-foreground">{form.slug}</p>

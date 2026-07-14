@@ -4,6 +4,7 @@ import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
+import { formatDashboardDateTime } from "@/lib/dashboard/dates";
 import { getDeploymentDetail } from "@/lib/deployment/services";
 import { getDashboardSessionContext } from "@/lib/session";
 
@@ -14,7 +15,11 @@ export default async function DeploymentDetailPage({
 }) {
   const context = await getDashboardSessionContext();
   if (!context) {
-    return <DashboardPage title="Deployment"><UnauthorizedState message="Sign in to view this deployment." /></DashboardPage>;
+    return (
+      <DashboardPage title="Deployment">
+        <UnauthorizedState message="Sign in to view this deployment." />
+      </DashboardPage>
+    );
   }
 
   const request = createDashboardRequest(context);
@@ -31,7 +36,9 @@ export default async function DeploymentDetailPage({
             </Button>
           ) : null}
           <Button asChild size="sm">
-            <Link href={`/websites/${deployment.websiteId}/hosting`}>Hosting</Link>
+            <Link href={`/websites/${deployment.websiteId}/deployments/${deployment.id}`}>
+              Website-scoped Detail
+            </Link>
           </Button>
         </>
       }
@@ -40,8 +47,18 @@ export default async function DeploymentDetailPage({
     >
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Info label="Provider" value={deployment.provider} />
-        <Info label="Status" value={deployment.status} tone={deployment.status === "ready" ? "success" : deployment.status === "failed" ? "error" : "warning"} />
-        <Info label="Environment" value={deployment.environment} />
+        <Info
+          label="Status"
+          value={deployment.status}
+          tone={
+            deployment.status === "ready"
+              ? "success"
+              : deployment.status === "failed"
+                ? "error"
+                : "warning"
+          }
+        />
+        <Info label="Environment" value={deployment.environment.name} />
         <Info label="Client" value={deployment.organization.name} />
       </section>
 
@@ -51,11 +68,29 @@ export default async function DeploymentDetailPage({
         </CardHeader>
         <CardContent className="grid gap-4 p-4 pt-0 md:grid-cols-2">
           <Field label="Deployment URL" value={deployment.deploymentUrl ?? "Not available"} />
-          <Field label="Provider deployment ID" value={deployment.providerDeploymentId ?? "Not available"} />
-          <Field label="Started" value={deployment.startedAt?.toLocaleString() ?? "Not recorded"} />
-          <Field label="Completed" value={deployment.completedAt?.toLocaleString() ?? "Not completed"} />
-          <Field label="Triggered by" value={deployment.triggeredBy?.email ?? "Provider or system"} />
-          <Field label="Failure summary" value={deployment.failureSummary ?? "No failure reported"} />
+          <Field label="Trigger" value={deployment.safeMetadata.triggerType} />
+          <Field
+            label="Source reference"
+            value={deployment.safeMetadata.sourceReference ?? "Not set"}
+          />
+          <Field label="Commit SHA" value={deployment.safeMetadata.commitSha ?? "Not set"} />
+          <Field
+            label="Provider deployment ID"
+            value={deployment.providerDeploymentId ?? "Not available"}
+          />
+          <Field label="Started" value={formatDashboardDateTime(deployment.startedAt)} />
+          <Field
+            label="Completed"
+            value={formatDashboardDateTime(deployment.completedAt, "Not completed")}
+          />
+          <Field
+            label="Triggered by"
+            value={deployment.triggeredBy?.email ?? "Provider or system"}
+          />
+          <Field
+            label="Failure summary"
+            value={deployment.failureSummary ?? "No failure reported"}
+          />
         </CardContent>
       </Card>
     </DashboardPage>
@@ -75,7 +110,9 @@ function Info({
     <Card>
       <CardContent className="p-4">
         <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
-        <Badge className="mt-2" variant={tone}>{value}</Badge>
+        <Badge className="mt-2" variant={tone}>
+          {value}
+        </Badge>
       </CardContent>
     </Card>
   );

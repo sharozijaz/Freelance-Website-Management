@@ -9,10 +9,12 @@ import {
   organizations,
   pages,
   posts,
+  websiteModules,
   websites,
 } from "@agency/database/schema";
 import { normalizeOrganizationSlug } from "@agency/auth/organizations";
 import { assertDashboardPermission, getScopedOrganizationIds } from "./access";
+import { compareDashboardDatesDesc } from "./dates";
 import { getPagination } from "./filters";
 import { requireWebsiteAccess } from "./projects";
 import type { DashboardRequest, DashboardSearchParams } from "./types";
@@ -135,6 +137,7 @@ export function normalizeFormField(input: {
   helpText?: string | null;
   label: string;
   name?: string | null;
+  options?: { label: string; value: string }[];
   placeholder?: string | null;
   required?: boolean;
   type: string;
@@ -147,13 +150,35 @@ export function normalizeFormField(input: {
   const name = normalizeOrganizationSlug(input.name ?? label).replaceAll("-", "_");
 
   if (!name || !/^[a-z][a-z0-9_]*$/.test(name)) {
-    throw new FormValidationError("Field name must start with a letter and use letters, numbers, or underscores.");
+    throw new FormValidationError(
+      "Field name must start with a letter and use letters, numbers, or underscores.",
+    );
+  }
+
+  const options = (input.options ?? []).map((option) => ({
+    label: option.label.trim().slice(0, 120),
+    value: option.value.trim().slice(0, 120),
+  }));
+
+  if (input.type === "select") {
+    if (options.length === 0) {
+      throw new FormValidationError("Select fields require at least one option.");
+    }
+
+    const values = new Set(options.map((option) => option.value));
+    if (
+      values.size !== options.length ||
+      options.some((option) => !option.label || !option.value)
+    ) {
+      throw new FormValidationError("Select options must have unique labels and values.");
+    }
   }
 
   return {
     helpText: input.helpText?.trim() ?? null,
     label,
     name,
+    options,
     placeholder: input.placeholder?.trim() ?? null,
     required: Boolean(input.required),
     type: input.type as FormFieldType,
@@ -181,6 +206,25 @@ export async function createForm({
     websiteId: input.websiteId,
   });
   assertDashboardPermission(request, "forms:manage", website.organizationId);
+
+  if (website.websiteType !== "sharoz_connected") {
+    throw new FormValidationError("Forms are only available for Sharoz Connected websites.");
+  }
+
+  const moduleEnabled = await database.query.websiteModules.findFirst({
+    where: and(
+      eq(websiteModules.organizationId, website.organizationId),
+      eq(websiteModules.websiteId, website.id),
+      eq(websiteModules.moduleKey, "forms"),
+      eq(websiteModules.enabled, true),
+    ),
+    columns: { id: true },
+  });
+
+  if (!moduleEnabled) {
+    throw new FormValidationError("Forms module is not enabled for this website.");
+  }
+
   const name = input.name.trim();
   if (name.length < 2) {
     throw new FormValidationError("Form name must be at least 2 characters.");
@@ -188,6 +232,10 @@ export async function createForm({
 
   const slug = normalizeOrganizationSlug(name);
   const safeRedirect = validateSafeRedirect(input.redirectUrl);
+  const fieldNames = new Set(input.fields.map((field) => field.name));
+  if (fieldNames.size !== input.fields.length) {
+    throw new FormValidationError("Form field names must be unique.");
+  }
 
   const [form] = await database.transaction(async (tx) => {
     const [created] = await tx
@@ -218,6 +266,7 @@ export async function createForm({
           helpText: field.helpText,
           label: field.label,
           name: field.name,
+          options: field.options,
           organizationId: website.organizationId,
           placeholder: field.placeholder,
           required: field.required,
@@ -323,7 +372,9 @@ export async function getSubmissions({
     params.websiteId ? eq(formSubmissions.websiteId, params.websiteId) : undefined,
     params.formId ? eq(formSubmissions.formId, params.formId) : undefined,
     orgIds ? inArray(formSubmissions.organizationId, orgIds) : undefined,
-    params.status !== "all" ? eq(formSubmissions.status, params.status as SubmissionStatus) : undefined,
+    params.status !== "all"
+      ? eq(formSubmissions.status, params.status as SubmissionStatus)
+      : undefined,
   ].filter(Boolean);
 
   const rows = await database
@@ -429,12 +480,53 @@ export async function getWebsiteOperationalSummary({
   const website = await requireWebsiteAccess({ database, request, websiteId });
   const [mediaCount, missingAlt, activeForms, unreadSubmissions, draftPages, draftPosts] =
     await Promise.all([
-      database.select({ value: sql<number>`count(*)` }).from(mediaAssets).where(and(eq(mediaAssets.websiteId, website.id), isNull(mediaAssets.deletedAt))),
-      database.select({ value: sql<number>`count(*)` }).from(mediaAssets).where(and(eq(mediaAssets.websiteId, website.id), ilike(mediaAssets.mimeType, "image/%"), isNull(mediaAssets.altText), isNull(mediaAssets.deletedAt))),
-      database.select({ value: sql<number>`count(*)` }).from(forms).where(and(eq(forms.websiteId, website.id), eq(forms.status, "published"), isNull(forms.deletedAt))),
-      database.select({ value: sql<number>`count(*)` }).from(formSubmissions).where(and(eq(formSubmissions.websiteId, website.id), eq(formSubmissions.status, "new"), isNull(formSubmissions.deletedAt))),
-      database.select({ value: sql<number>`count(*)` }).from(pages).where(and(eq(pages.websiteId, website.id), eq(pages.status, "draft"), isNull(pages.deletedAt))),
-      database.select({ value: sql<number>`count(*)` }).from(posts).where(and(eq(posts.websiteId, website.id), eq(posts.status, "draft"), isNull(posts.deletedAt))),
+      database
+        .select({ value: sql<number>`count(*)` })
+        .from(mediaAssets)
+        .where(and(eq(mediaAssets.websiteId, website.id), isNull(mediaAssets.deletedAt))),
+      database
+        .select({ value: sql<number>`count(*)` })
+        .from(mediaAssets)
+        .where(
+          and(
+            eq(mediaAssets.websiteId, website.id),
+            ilike(mediaAssets.mimeType, "image/%"),
+            isNull(mediaAssets.altText),
+            isNull(mediaAssets.deletedAt),
+          ),
+        ),
+      database
+        .select({ value: sql<number>`count(*)` })
+        .from(forms)
+        .where(
+          and(
+            eq(forms.websiteId, website.id),
+            eq(forms.status, "published"),
+            isNull(forms.deletedAt),
+          ),
+        ),
+      database
+        .select({ value: sql<number>`count(*)` })
+        .from(formSubmissions)
+        .where(
+          and(
+            eq(formSubmissions.websiteId, website.id),
+            eq(formSubmissions.status, "new"),
+            isNull(formSubmissions.deletedAt),
+          ),
+        ),
+      database
+        .select({ value: sql<number>`count(*)` })
+        .from(pages)
+        .where(
+          and(eq(pages.websiteId, website.id), eq(pages.status, "draft"), isNull(pages.deletedAt)),
+        ),
+      database
+        .select({ value: sql<number>`count(*)` })
+        .from(posts)
+        .where(
+          and(eq(posts.websiteId, website.id), eq(posts.status, "draft"), isNull(posts.deletedAt)),
+        ),
     ]);
 
   return {
@@ -457,8 +549,10 @@ export async function getContentOperationsV2({
 }) {
   assertDashboardPermission(request, "cms:read", params.organizationId);
   const orgIds = scopedOrgIds(request);
-  const includePages = !params.contentType || params.contentType === "all" || params.contentType === "page";
-  const includePosts = !params.contentType || params.contentType === "all" || params.contentType === "post";
+  const includePages =
+    !params.contentType || params.contentType === "all" || params.contentType === "page";
+  const includePosts =
+    !params.contentType || params.contentType === "all" || params.contentType === "post";
   const pageConditions = [
     isNull(pages.deletedAt),
     params.organizationId ? eq(pages.organizationId, params.organizationId) : undefined,
@@ -513,7 +607,9 @@ export async function getContentOperationsV2({
       : [],
   ]);
 
-  const items = [...pageRows, ...postRows].sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+  const items = [...pageRows, ...postRows].sort((a, b) =>
+    compareDashboardDatesDesc(a.updatedAt, b.updatedAt),
+  );
   return { items, page: params.page };
 }
 

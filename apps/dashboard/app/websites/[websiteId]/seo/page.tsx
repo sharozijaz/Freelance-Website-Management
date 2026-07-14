@@ -8,8 +8,6 @@ import { createDashboardRequest } from "@/lib/dashboard/access";
 import { getWebsiteSeoOperations } from "@/lib/dashboard/seo";
 import { getDashboardSessionContext } from "@/lib/session";
 
-const cmsBaseUrl = process.env.NEXT_PUBLIC_CMS_URL ?? "http://localhost:3001";
-
 export default async function WebsiteSeoPage({
   params,
 }: {
@@ -37,7 +35,7 @@ export default async function WebsiteSeoPage({
       actions={
         <>
           <Button asChild size="sm" variant="outline">
-            <a href={`${cmsBaseUrl}/admin/collections/site-settings`}>SEO Settings in CMS</a>
+            <Link href={`/websites/${websiteId}`}>Website Settings</Link>
           </Button>
           <Button asChild size="sm" variant="ghost">
             <Link href={`/websites/${websiteId}`}>Back to Website</Link>
@@ -58,7 +56,8 @@ export default async function WebsiteSeoPage({
         <CardContent className="p-4">
           <p className="text-sm font-medium">SEO Settings Workflow</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Website defaults are managed in Payload Site Settings so the dashboard does not duplicate CMS editing.
+            SEO findings are generated from V2 platform content, media, and website delivery data.
+            Public websites own presentation while the dashboard owns operational metadata.
           </p>
         </CardContent>
       </Card>
@@ -72,17 +71,30 @@ export default async function WebsiteSeoPage({
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-surface">
           {seo.findings.map((finding) => (
-            <article className="grid gap-3 border-b border-border p-4 last:border-b-0 md:grid-cols-[0.7fr_1.5fr_0.8fr_auto] md:items-center" key={`${finding.ruleId}-${finding.resourceId}`}>
-              <Badge variant={finding.severity === "error" ? "error" : finding.severity === "warning" ? "warning" : "outline"}>
+            <article
+              className="grid gap-3 border-b border-border p-4 last:border-b-0 md:grid-cols-[0.7fr_1.5fr_0.8fr_auto] md:items-center"
+              key={`${finding.ruleId}-${finding.resourceId}`}
+            >
+              <Badge
+                variant={
+                  finding.severity === "error"
+                    ? "error"
+                    : finding.severity === "warning"
+                      ? "warning"
+                      : "outline"
+                }
+              >
                 {finding.severity}
               </Badge>
               <div>
                 <p className="font-medium">{finding.title}</p>
                 <p className="text-sm text-muted-foreground">{finding.description}</p>
               </div>
-              <span className="text-sm text-muted-foreground">{finding.resourceType} · {finding.ruleId}</span>
+              <span className="text-sm text-muted-foreground">
+                {finding.resourceType} · {finding.ruleId}
+              </span>
               <Button asChild size="sm" variant="outline">
-                <a href={finding.cmsEditHref}>Open in CMS</a>
+                <Link href={finding.actionHref}>Review</Link>
               </Button>
             </article>
           ))}

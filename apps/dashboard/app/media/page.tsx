@@ -1,4 +1,5 @@
-import { ExternalLink, Images } from "lucide-react";
+import Link from "next/link";
+import { Images } from "lucide-react";
 import { Badge, Button, EmptyState } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { FilterBar } from "@/components/filter-bar";
@@ -6,10 +7,9 @@ import { UnauthorizedState } from "@/components/state-panels";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { getMediaOperations } from "@/lib/dashboard/content-ops";
+import { formatDashboardDate } from "@/lib/dashboard/dates";
 import { parseDashboardSearchParams } from "@/lib/dashboard/filters";
 import { getDashboardSessionContext } from "@/lib/session";
-
-const cmsBaseUrl = process.env.NEXT_PUBLIC_CMS_URL ?? "http://localhost:3001";
 
 export default async function MediaPage({
   searchParams,
@@ -26,7 +26,10 @@ export default async function MediaPage({
   }
 
   const rawParams = await searchParams;
-  const params: ReturnType<typeof parseDashboardSearchParams> & { type: string; websiteId?: string } = {
+  const params: ReturnType<typeof parseDashboardSearchParams> & {
+    type: string;
+    websiteId?: string;
+  } = {
     ...parseDashboardSearchParams(rawParams),
     type: typeof rawParams.type === "string" ? rawParams.type : "all",
   };
@@ -43,10 +46,10 @@ export default async function MediaPage({
     <DashboardPage
       actions={
         <Button asChild size="sm">
-          <a href={`${cmsBaseUrl}/admin/collections/media/create`}>Upload in CMS</a>
+          <Link href="/websites">Open Website Media</Link>
         </Button>
       }
-      description="Operational view of Payload media scoped to accessible client websites."
+      description="Operational view of V2 media assets scoped to accessible client websites."
       title="Media"
     >
       <FilterBar
@@ -58,7 +61,7 @@ export default async function MediaPage({
 
       {media.items.length === 0 ? (
         <EmptyState
-          description="Media uploaded through Payload CMS will appear here when it is available to the dashboard."
+          description="Media registered through website-scoped V2 media workflows will appear here."
           icon={<Images className="size-5" />}
           title="No media found"
         />
@@ -71,7 +74,9 @@ export default async function MediaPage({
                   <p className="truncate text-sm font-medium">{asset.filename}</p>
                   <p className="text-xs text-muted-foreground">{asset.mimeType}</p>
                 </div>
-                <Badge variant={asset.mediaType === "image" && !asset.altText ? "warning" : "outline"}>
+                <Badge
+                  variant={asset.mediaType === "image" && !asset.altText ? "warning" : "outline"}
+                >
                   {asset.mediaType}
                 </Badge>
               </div>
@@ -86,17 +91,21 @@ export default async function MediaPage({
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground">Size</dt>
-                  <dd>{asset.fileSize ? `${Math.round(asset.fileSize / 1024).toString()} KB` : "Unknown"}</dd>
+                  <dd>
+                    {asset.fileSize
+                      ? `${Math.round(asset.fileSize / 1024).toString()} KB`
+                      : "Unknown"}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground">Uploaded</dt>
-                  <dd>{asset.uploadedAt.toLocaleDateString()}</dd>
+                  <dd>{formatDashboardDate(asset.uploadedAt)}</dd>
                 </div>
               </dl>
               <Button asChild className="mt-4" size="sm" variant="outline">
-                <a href={`${cmsBaseUrl}/admin/collections/media/${asset.id}`}>
-                  Open in CMS <ExternalLink className="size-3" />
-                </a>
+                <Link href={asset.websiteId ? `/websites/${asset.websiteId}/media` : "/media"}>
+                  Review Media
+                </Link>
               </Button>
             </article>
           ))}

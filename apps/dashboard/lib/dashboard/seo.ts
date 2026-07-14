@@ -25,10 +25,7 @@ export interface SeoWebsiteSummary {
   websiteName: string;
 }
 
-function websiteCanonicalBase(row: {
-  primaryDomain: string | null;
-  productionUrl: string | null;
-}) {
+function websiteCanonicalBase(row: { primaryDomain: string | null; productionUrl: string | null }) {
   if (row.productionUrl) return row.productionUrl;
   if (row.primaryDomain) return `https://${row.primaryDomain}`;
   return null;
@@ -61,27 +58,32 @@ function contentPath(resource: SeoContentResource) {
       : `/${resource.slug}`;
 }
 
-function addActions(findings: SeoFinding[], cmsBaseUrl: string) {
+export function getSeoActionHref(
+  finding: Pick<SeoFinding, "resourceId" | "resourceType" | "websiteId">,
+) {
+  if (finding.resourceType === "post") {
+    return `/websites/${finding.websiteId}/blog/${finding.resourceId}`;
+  }
+
+  if (finding.resourceType === "media") {
+    return `/websites/${finding.websiteId}/media`;
+  }
+
+  return `/websites/${finding.websiteId}`;
+}
+
+function addActions(findings: SeoFinding[]) {
   return findings.map((finding) => ({
     ...finding,
-    actionHref:
-      finding.resourceType === "media"
-        ? `${cmsBaseUrl}/admin/collections/media/${finding.resourceId}`
-        : `${cmsBaseUrl}/admin/collections/${finding.resourceType === "post" ? "posts" : "pages"}/${finding.resourceId}`,
-    cmsEditHref:
-      finding.resourceType === "media"
-        ? `${cmsBaseUrl}/admin/collections/media/${finding.resourceId}`
-        : `${cmsBaseUrl}/admin/collections/${finding.resourceType === "post" ? "posts" : "pages"}/${finding.resourceId}`,
+    actionHref: getSeoActionHref(finding),
   }));
 }
 
 export async function getSeoOperations({
-  cmsBaseUrl = process.env.NEXT_PUBLIC_CMS_URL ?? "http://localhost:3001",
   database,
   params,
   request,
 }: {
-  cmsBaseUrl?: string;
   database: Database;
   params: DashboardSearchParams & {
     resourceType?: string;
@@ -171,7 +173,7 @@ export async function getSeoOperations({
       .filter((asset) => asset.mimeType.startsWith("image/") && !asset.altText?.trim())
       .map((asset) => ({
         description: `${asset.filename} is missing alt text.`,
-        recommendedAction: "Open the media asset in Payload CMS and add descriptive alt text.",
+        recommendedAction: "Open the website media manager and add descriptive alt text.",
         resourceId: asset.id,
         resourceTitle: asset.filename,
         resourceType: "media" as const,
@@ -181,13 +183,21 @@ export async function getSeoOperations({
         websiteId: website.id,
       }));
 
-    return addActions([...contentFindings, ...mediaFindings], cmsBaseUrl);
+    return addActions([...contentFindings, ...mediaFindings]);
   });
 
   const filtered = findings
-    .filter((finding) => params.severity && params.severity !== "all" ? finding.severity === params.severity : true)
-    .filter((finding) => params.resourceType && params.resourceType !== "all" ? finding.resourceType === params.resourceType : true)
-    .filter((finding) => params.ruleId && params.ruleId !== "all" ? finding.ruleId === params.ruleId : true)
+    .filter((finding) =>
+      params.severity && params.severity !== "all" ? finding.severity === params.severity : true,
+    )
+    .filter((finding) =>
+      params.resourceType && params.resourceType !== "all"
+        ? finding.resourceType === params.resourceType
+        : true,
+    )
+    .filter((finding) =>
+      params.ruleId && params.ruleId !== "all" ? finding.ruleId === params.ruleId : true,
+    )
     .sort((a, b) => severityRank(a.severity) - severityRank(b.severity));
 
   const summaries: SeoWebsiteSummary[] = websiteRows.map((website) => {
@@ -197,7 +207,8 @@ export async function getSeoOperations({
       findings: websiteFindings.length,
       organizationId: website.organizationId,
       organizationName: website.organizationName,
-      recommendations: websiteFindings.filter((finding) => finding.severity === "recommendation").length,
+      recommendations: websiteFindings.filter((finding) => finding.severity === "recommendation")
+        .length,
       warnings: websiteFindings.filter((finding) => finding.severity === "warning").length,
       websiteId: website.id,
       websiteName: website.name,

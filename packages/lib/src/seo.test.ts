@@ -40,11 +40,15 @@ describe("SEO engine", () => {
     expect(resolveCanonicalUrl({ baseUrl: "https://example.com", path: "/about" })).toBe(
       "https://example.com/about",
     );
-    expect(resolveCanonicalUrl({ explicitCanonical: "https://client.com/about", path: "/about" })).toBe(
-      "https://client.com/about",
-    );
-    expect(resolveCanonicalUrl({ explicitCanonical: "javascript:alert(1)", path: "/about" })).toBeNull();
-    expect(resolveCanonicalUrl({ explicitCanonical: "http://client.com/about", path: "/about" })).toBeNull();
+    expect(
+      resolveCanonicalUrl({ explicitCanonical: "https://client.com/about", path: "/about" }),
+    ).toBe("https://client.com/about");
+    expect(
+      resolveCanonicalUrl({ explicitCanonical: "javascript:alert(1)", path: "/about" }),
+    ).toBeNull();
+    expect(
+      resolveCanonicalUrl({ explicitCanonical: "http://client.com/about", path: "/about" }),
+    ).toBeNull();
   });
 
   it("resolves website canonical base from primary domain before provider URLs", () => {
@@ -67,7 +71,11 @@ describe("SEO engine", () => {
         {
           blocks: [],
           id: "page_1",
-          seo: { metaDescription: "Same description", metaTitle: "Short", robots: { index: false } },
+          seo: {
+            metaDescription: "Same description",
+            metaTitle: "Short",
+            robots: { index: false },
+          },
           slug: "about",
           status: "published",
           title: "About",

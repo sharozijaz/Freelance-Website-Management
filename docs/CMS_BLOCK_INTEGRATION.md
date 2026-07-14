@@ -1,5 +1,7 @@
 # CMS Block Integration And Page Composition
 
+> **V2 legacy notice:** This document describes V1 Payload page composition. V2 must not store page section composition for Sharoz Connected websites and no new V2 feature may depend on Payload `Pages.layout` blocks or the `apps/web` block renderer. See [ADR-001](adr/ADR-001-V2-PLATFORM-ARCHITECTURE.md) and [V2 Architecture Guardrails](V2_ARCHITECTURE_GUARDRAILS.md).
+
 Milestone 10 connects Payload CMS page composition to the website renderer without introducing a second frontend registry.
 
 ## Content Lifecycle

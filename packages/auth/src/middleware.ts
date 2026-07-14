@@ -12,10 +12,16 @@ function isPublicRoute(pathname: string, publicRoutes: string[]): boolean {
 }
 
 function hasSessionCookie(request: NextRequest, cookiePrefix: string): boolean {
-  return Boolean(
-    request.cookies.get(`${cookiePrefix}.session_token`) ??
-    request.cookies.get(`${cookiePrefix}-session_token`),
-  );
+  const sessionCookieNames = [
+    `${cookiePrefix}.session_token`,
+    `${cookiePrefix}-session_token`,
+    `__Secure-${cookiePrefix}.session_token`,
+    `__Secure-${cookiePrefix}-session_token`,
+    `__Host-${cookiePrefix}.session_token`,
+    `__Host-${cookiePrefix}-session_token`,
+  ];
+
+  return sessionCookieNames.some((cookieName) => request.cookies.has(cookieName));
 }
 
 export function createAuthMiddleware({

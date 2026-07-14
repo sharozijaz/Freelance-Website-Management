@@ -1,5 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import SignInPage, { metadata } from "./page";
+
+vi.mock("@/lib/session", () => ({
+  getDashboardSessionContext: vi.fn(() => Promise.resolve(null)),
+}));
 
 describe("dashboard sign-in route", () => {
   it("exists as the browser-facing authentication page", async () => {

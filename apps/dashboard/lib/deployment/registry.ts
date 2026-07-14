@@ -76,7 +76,9 @@ export function hasProviderCapability(
   providerId: DeploymentProviderId,
   capability: DeploymentCapability,
 ) {
-  return (getProviderDefinition(providerId).capabilities as DeploymentCapability[]).includes(capability);
+  return (getProviderDefinition(providerId).capabilities as DeploymentCapability[]).includes(
+    capability,
+  );
 }
 
 export function listProviderDefinitions() {

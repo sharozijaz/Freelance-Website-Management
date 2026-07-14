@@ -6,7 +6,14 @@ import { resolveTenant } from "@/lib/tenant";
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
   const tenant = resolveTenant();
-  const settings = await getSiteSettings({ organizationId: tenant.organizationId });
+  let settings: Awaited<ReturnType<typeof getSiteSettings>> = null;
+
+  try {
+    settings = await getSiteSettings({ organizationId: tenant.organizationId });
+  } catch (error) {
+    console.warn("Using default robots policy because Payload CMS is unavailable.", error);
+  }
+
   const defaults = getWebsiteSeoDefaults(settings);
   const isPreview = process.env.VERCEL_ENV === "preview" || process.env.NODE_ENV !== "production";
 

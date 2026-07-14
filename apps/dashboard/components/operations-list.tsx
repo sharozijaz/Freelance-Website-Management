@@ -16,7 +16,11 @@ export function OperationsList({
         <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        {children ? <div className="divide-y divide-border">{children}</div> : <EmptyState title={empty} />}
+        {children ? (
+          <div className="divide-y divide-border">{children}</div>
+        ) : (
+          <EmptyState title={empty} />
+        )}
       </CardContent>
     </Card>
   );

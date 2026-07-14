@@ -7,6 +7,7 @@ import {
 } from "@/lib/dashboard/projects";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
+import { toSafeErrorMessage } from "@/lib/errors";
 import { requireDashboardSessionContext } from "@/lib/session";
 
 function stringValue(formData: FormData, key: string): string | null {
@@ -57,7 +58,7 @@ export async function POST(
       });
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Project could not be updated.";
+    const message = toSafeErrorMessage(error, "Project could not be updated.");
     redirect(`${returnTo}?error=${encodeURIComponent(message)}`);
   }
 

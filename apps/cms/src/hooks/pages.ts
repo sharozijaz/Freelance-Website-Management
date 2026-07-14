@@ -1,5 +1,6 @@
 import { createPreviewToken } from "@agency/lib/preview";
 import type { CollectionAfterChangeHook, CollectionBeforeValidateHook } from "payload";
+import { getDefaultOrganizationId, getDefaultWebsiteId } from "../fields";
 
 interface PageData {
   _status?: "draft" | "published";
@@ -7,6 +8,7 @@ interface PageData {
   organizationId?: string;
   previewUrl?: string;
   slug?: string;
+  websiteId?: string;
 }
 
 const reservedPageSegments = new Set([
@@ -117,9 +119,19 @@ export const preparePageForSave: CollectionBeforeValidateHook<PageData> = async 
   }
 
   const slug = normalizeSlug(data.slug);
-  const organizationId = data.organizationId ?? originalDoc?.organizationId;
+  const organizationId =
+    data.organizationId ?? originalDoc?.organizationId ?? getDefaultOrganizationId();
+  const websiteId = data.websiteId ?? originalDoc?.websiteId ?? getDefaultWebsiteId();
 
   data.slug = slug;
+
+  if (organizationId) {
+    data.organizationId = organizationId;
+  }
+
+  if (websiteId) {
+    data.websiteId = websiteId;
+  }
 
   if (organizationId) {
     assertValidSlug(slug);

@@ -1,3 +1,5 @@
+import type { WebsiteType } from "@agency/lib/modules";
+
 import type { MembershipRole, SessionContext } from "@agency/auth";
 
 export type DashboardWorkspaceMode = "agency" | "client";
@@ -88,6 +90,7 @@ export interface WebsiteListItem {
   productionUrl: string | null;
   status: string;
   updatedAt: Date;
+  websiteType: WebsiteType;
 }
 
 export interface ProjectListItem {

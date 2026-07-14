@@ -8,14 +8,59 @@ import {
   posts,
   projectAssignments,
   projects,
+  users,
+  websiteEnvironments,
   websites,
 } from "@agency/database/schema";
 import { normalizeOrganizationSlug } from "@agency/auth/organizations";
+import { isWebsiteType } from "@agency/lib/modules";
 import { assertDashboardPermission, getScopedOrganizationIds } from "./access";
+import { compareDashboardDatesDesc } from "./dates";
 import { getPagination } from "./filters";
 import type { DashboardRequest, DashboardSearchParams } from "./types";
 
 type Database = ReturnType<typeof createDatabaseClient>;
+
+const defaultWebsiteEnvironmentTypes = ["staging", "production"] as const;
+
+function defaultEnvironmentName(type: (typeof defaultWebsiteEnvironmentTypes)[number]) {
+  return type === "staging" ? "Staging" : "Production";
+}
+
+async function ensureDefaultWebsiteEnvironments({
+  database,
+  website,
+}: {
+  database: Pick<Database, "insert" | "query">;
+  website: Pick<
+    typeof websites.$inferSelect,
+    "id" | "organizationId" | "previewUrl" | "productionUrl" | "websiteType"
+  >;
+}) {
+  if (website.websiteType !== "sharoz_connected") {
+    return;
+  }
+
+  for (const type of defaultWebsiteEnvironmentTypes) {
+    const existing = await database.query.websiteEnvironments.findFirst({
+      where: and(eq(websiteEnvironments.websiteId, website.id), eq(websiteEnvironments.type, type)),
+      columns: { id: true },
+    });
+
+    if (existing) {
+      continue;
+    }
+
+    await database.insert(websiteEnvironments).values({
+      baseUrl: type === "staging" ? website.previewUrl : website.productionUrl,
+      name: defaultEnvironmentName(type),
+      organizationId: website.organizationId,
+      status: "active",
+      type,
+      websiteId: website.id,
+    });
+  }
+}
 
 export const projectStatuses = [
   "planning",
@@ -264,8 +309,14 @@ export async function updateProject({
   projectId: string;
   request: DashboardRequest;
 }) {
-  const project = await requireProjectAccess({ database, projectId, request, permission: "projects:manage" });
-  const figmaUrl = input.figmaUrl === undefined ? project.figmaUrl : validateFigmaUrl(input.figmaUrl);
+  const project = await requireProjectAccess({
+    database,
+    projectId,
+    request,
+    permission: "projects:manage",
+  });
+  const figmaUrl =
+    input.figmaUrl === undefined ? project.figmaUrl : validateFigmaUrl(input.figmaUrl);
 
   if (input.websiteId) {
     const website = await requireWebsiteAccess({ database, request, websiteId: input.websiteId });
@@ -285,7 +336,8 @@ export async function updateProject({
     .update(projects)
     .set({
       figmaUrl,
-      launchTargetAt: input.launchTargetAt === undefined ? project.launchTargetAt : input.launchTargetAt,
+      launchTargetAt:
+        input.launchTargetAt === undefined ? project.launchTargetAt : input.launchTargetAt,
       metadata: nextMetadata,
       name: input.name?.trim() ?? project.name,
       updatedAt: new Date(),
@@ -334,7 +386,12 @@ export async function transitionProject({
   request: DashboardRequest;
   status: ProjectStatus;
 }) {
-  const project = await requireProjectAccess({ database, projectId, request, permission: "projects:manage" });
+  const project = await requireProjectAccess({
+    database,
+    projectId,
+    request,
+    permission: "projects:manage",
+  });
   if (!isProjectStatus(project.status)) {
     throw new ProjectValidationError("Project uses an unsupported lifecycle status.");
   }
@@ -378,7 +435,12 @@ export async function archiveProject({
   projectId: string;
   request: DashboardRequest;
 }) {
-  const project = await requireProjectAccess({ database, projectId, request, permission: "projects:manage" });
+  const project = await requireProjectAccess({
+    database,
+    projectId,
+    request,
+    permission: "projects:manage",
+  });
   const [updated] = await database
     .update(projects)
     .set({ deletedAt: new Date(), updatedAt: new Date() })
@@ -411,6 +473,7 @@ export async function createWebsite({
     slug?: string | null;
     status?: "draft" | "active" | "paused" | "archived";
     theme?: Record<string, unknown>;
+    websiteType?: string | null;
   };
   request: DashboardRequest;
 }) {
@@ -422,6 +485,11 @@ export async function createWebsite({
   }
 
   const slug = normalizeSlug(input.slug ?? name);
+  const websiteType = input.websiteType ?? "external_legacy";
+
+  if (!isWebsiteType(websiteType)) {
+    throw new ProjectValidationError("Website type is not supported.");
+  }
 
   if (input.projectId) {
     const project = await requireProjectAccess({
@@ -458,6 +526,7 @@ export async function createWebsite({
         slug,
         status: input.status ?? "draft",
         theme: input.theme ?? {},
+        websiteType,
       })
       .returning();
 
@@ -475,16 +544,73 @@ export async function createWebsite({
     await tx.insert(auditLogs).values({
       action: "website.created",
       actorUserId: request.context.user.id,
-      metadata: { projectId: input.projectId ?? null },
+      metadata: { projectId: input.projectId ?? null, websiteType },
       organizationId: input.organizationId,
       resourceId: created.id,
       resourceType: "website",
     });
 
+    await ensureDefaultWebsiteEnvironments({ database: tx, website: created });
+
     return [created];
   });
 
   return website;
+}
+
+export async function updateWebsiteType({
+  database,
+  request,
+  websiteId,
+  websiteType,
+}: {
+  database: Database;
+  request: DashboardRequest;
+  websiteId: string;
+  websiteType: string;
+}) {
+  if (!isWebsiteType(websiteType)) {
+    throw new ProjectValidationError("Website type is not supported.");
+  }
+
+  const website = await requireWebsiteAccess({
+    database,
+    permission: "websites:manage",
+    request,
+    websiteId,
+  });
+
+  if (website.websiteType === websiteType) {
+    return website;
+  }
+
+  const [updated] = await database.transaction(async (tx) => {
+    const [row] = await tx
+      .update(websites)
+      .set({ updatedAt: new Date(), websiteType })
+      .where(eq(websites.id, website.id))
+      .returning();
+
+    if (!row) {
+      throw new ProjectValidationError("Website type could not be updated.");
+    }
+
+    await ensureDefaultWebsiteEnvironments({ database: tx, website: row });
+
+    return [row];
+  });
+
+  await writeAudit({
+    action: "website.type_changed",
+    database,
+    metadata: { from: website.websiteType, to: websiteType },
+    organizationId: website.organizationId,
+    request,
+    resourceId: website.id,
+    resourceType: "website",
+  });
+
+  return updated;
 }
 
 export async function requireProjectAccess({
@@ -518,7 +644,17 @@ export async function requireWebsiteAccess({
   websiteId,
 }: {
   database: Database;
-  permission?: "websites:read" | "websites:manage";
+  permission?:
+    | "websites:read"
+    | "websites:manage"
+    | "modules:read"
+    | "modules:manage"
+    | "developer:credentials"
+    | "blog:read"
+    | "blog:create"
+    | "blog:update"
+    | "blog:publish"
+    | "blog:delete";
   request: DashboardRequest;
   websiteId: string;
 }) {
@@ -631,23 +767,30 @@ export async function getProjectDetail({
   const [members, activity] = await Promise.all([
     database
       .select({
-        email: memberships.userId,
-        name: projects.name,
+        email: users.email,
+        name: users.name,
         role: memberships.role,
-        userId: memberships.userId,
+        userId: users.id,
       })
       .from(projectAssignments)
       .innerJoin(memberships, eq(projectAssignments.userId, memberships.userId))
+      .innerJoin(users, eq(projectAssignments.userId, users.id))
       .where(
         and(
+          eq(projectAssignments.organizationId, project.organizationId),
           eq(projectAssignments.projectId, project.id),
           eq(memberships.organizationId, project.organizationId),
+          eq(memberships.status, "active"),
           isNull(memberships.deletedAt),
+          isNull(users.deletedAt),
         ),
       )
       .limit(10),
     database.query.auditLogs.findMany({
-      where: and(eq(auditLogs.organizationId, project.organizationId), eq(auditLogs.resourceId, project.id)),
+      where: and(
+        eq(auditLogs.organizationId, project.organizationId),
+        eq(auditLogs.resourceId, project.id),
+      ),
       with: { actor: true },
       orderBy: (table, { desc: sortDesc }) => [sortDesc(table.createdAt)],
       limit: 8,
@@ -696,7 +839,10 @@ export async function getWebsiteDetail({
       limit: 5,
     }),
     database.query.auditLogs.findMany({
-      where: and(eq(auditLogs.organizationId, website.organizationId), eq(auditLogs.resourceId, website.id)),
+      where: and(
+        eq(auditLogs.organizationId, website.organizationId),
+        eq(auditLogs.resourceId, website.id),
+      ),
       with: { actor: true },
       orderBy: (table, { desc: sortDesc }) => [sortDesc(table.createdAt)],
       limit: 8,
@@ -705,9 +851,10 @@ export async function getWebsiteDetail({
 
   return {
     activity,
-    content: [...pageRows.map((item) => ({ ...item, type: "page" as const })), ...postRows.map((item) => ({ ...item, type: "post" as const }))].sort(
-      (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
-    ),
+    content: [
+      ...pageRows.map((item) => ({ ...item, type: "page" as const })),
+      ...postRows.map((item) => ({ ...item, type: "post" as const })),
+    ].sort((a, b) => compareDashboardDatesDesc(a.updatedAt, b.updatedAt)),
     project,
     website,
   };
@@ -728,13 +875,19 @@ export async function getProjectCreationOptions({
       orderBy: (table, { asc: sortAsc }) => [sortAsc(table.name)],
     }),
     database.query.websites.findMany({
-      where: and(isNull(websites.deletedAt), orgIds ? inArray(websites.organizationId, orgIds) : undefined),
+      where: and(
+        isNull(websites.deletedAt),
+        orgIds ? inArray(websites.organizationId, orgIds) : undefined,
+      ),
       orderBy: (table, { asc: sortAsc }) => [sortAsc(table.name)],
     }),
   ]);
 
   const projectRows = await database.query.projects.findMany({
-    where: and(isNull(projects.deletedAt), orgIds ? inArray(projects.organizationId, orgIds) : undefined),
+    where: and(
+      isNull(projects.deletedAt),
+      orgIds ? inArray(projects.organizationId, orgIds) : undefined,
+    ),
     orderBy: (table, { asc: sortAsc }) => [sortAsc(table.name)],
   });
 

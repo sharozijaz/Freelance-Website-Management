@@ -1,4 +1,20 @@
-export { createEnvSchema } from "./env";
+export { createEnvSchema, requireProductionEnv } from "./env";
+export {
+  getDependentModuleKeys,
+  getModuleDefinition,
+  getModuleDependencies,
+  isKnownModuleKey,
+  isWebsiteType,
+  listModuleDefinitions,
+  moduleDependencies,
+  moduleKeySchema,
+  moduleKeys,
+  websiteTypeDescriptions,
+  websiteTypeLabels,
+  websiteTypeSchema,
+  websiteTypes,
+} from "./modules";
+export type { ModuleDefinition, ModuleKey, WebsiteType } from "./modules";
 export { createPreviewToken, verifyPreviewToken } from "./preview";
 export type { CreatePreviewTokenInput, PreviewTokenPayload } from "./preview";
 export {

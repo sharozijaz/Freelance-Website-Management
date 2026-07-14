@@ -1,5 +1,15 @@
 import { relations } from "drizzle-orm";
-import { boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { organizations, users, websites } from "./core";
 import { contentPlaceholderStatusEnum, formFieldTypeEnum, formSubmissionStatusEnum } from "./enums";
 
@@ -173,7 +183,14 @@ export const formSubmissions = pgTable(
     status: formSubmissionStatusEnum("status").notNull().default("new"),
     data: jsonb("data").$type<Record<string, string | string[] | boolean>>().notNull().default({}),
     source: jsonb("source")
-      .$type<{ ipHash?: string; path?: string; referrer?: string; userAgent?: string }>()
+      .$type<{
+        environmentId?: string;
+        environmentType?: "production" | "staging";
+        ipHash?: string;
+        path?: string;
+        referrer?: string;
+        userAgent?: string;
+      }>()
       .notNull()
       .default({}),
     submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),

@@ -9,6 +9,7 @@ import type { OrganizationMembership } from "@agency/auth";
 interface CmsUser {
   activeOrganizationId?: string | null;
   memberships?: OrganizationMembership[];
+  role?: string | null;
 }
 
 interface TenantDocument {
@@ -16,7 +17,9 @@ interface TenantDocument {
 }
 
 function getCmsUser(req: PayloadRequest): CmsUser | null {
-  return (req.user as CmsUser | null | undefined) ?? null;
+  const user: CmsUser | null | undefined = req.user;
+
+  return user ?? null;
 }
 
 export function getActiveOrganizationId(req: PayloadRequest): string | null {
@@ -35,15 +38,58 @@ export function getActiveMembership(req: PayloadRequest): OrganizationMembership
   return findMembershipForOrganization(user.memberships, organizationId) ?? null;
 }
 
-export function can(permission: Permission): Access {
-  return ({ req }) => hasPermission(getActiveMembership(req), permission);
+export function isCmsAdmin(req: PayloadRequest): boolean {
+  return getCmsUser(req)?.role === "cms_admin";
 }
+
+export function can(permission: Permission): Access {
+  return ({ req }) => isCmsAdmin(req) || hasPermission(getActiveMembership(req), permission);
+}
+
+export const publicRead: Access = () => true;
+
+export const publishedPageRead: Access = ({ req }): boolean | Where => {
+  if (isCmsAdmin(req) || getActiveMembership(req)) {
+    return true;
+  }
+
+  return {
+    or: [
+      {
+        _status: {
+          equals: "published",
+        },
+      },
+      {
+        workflowStatus: {
+          equals: "published",
+        },
+      },
+    ],
+  };
+};
+
+export const publishedPostRead: Access = ({ req }): boolean | Where => {
+  if (isCmsAdmin(req) || getActiveMembership(req)) {
+    return true;
+  }
+
+  return {
+    _status: {
+      equals: "published",
+    },
+  };
+};
 
 export function tenantReadAccess(permission: Permission): Access {
   return ({ req }): boolean | Where => {
     const organizationId = getActiveOrganizationId(req);
     const user = getCmsUser(req);
     const membership = getActiveMembership(req);
+
+    if (isCmsAdmin(req)) {
+      return true;
+    }
 
     if (
       user?.memberships?.some((item) => item.status === "active" && item.role === "agency_owner")
@@ -68,6 +114,10 @@ export function tenantWriteAccess(permission: Permission): Access<TenantDocument
     const organizationId = getActiveOrganizationId(req);
     const membership = getActiveMembership(req);
 
+    if (isCmsAdmin(req)) {
+      return true;
+    }
+
     if (!organizationId || !hasPermission(membership, permission)) {
       return false;
     }
@@ -83,7 +133,21 @@ export function tenantWriteAccess(permission: Permission): Access<TenantDocument
 export const contentAccess = {
   create: tenantWriteAccess("cms:write"),
   delete: can("cms:publish"),
-  read: tenantReadAccess("cms:read"),
+  read: publicRead,
+  update: tenantWriteAccess("cms:write"),
+};
+
+export const publishedPageAccess = {
+  create: tenantWriteAccess("cms:write"),
+  delete: can("cms:publish"),
+  read: publishedPageRead,
+  update: tenantWriteAccess("cms:write"),
+};
+
+export const publishedPostAccess = {
+  create: tenantWriteAccess("cms:write"),
+  delete: can("cms:publish"),
+  read: publishedPostRead,
   update: tenantWriteAccess("cms:write"),
 };
 
@@ -97,11 +161,11 @@ export const publishAccess = {
 export const mediaAccess = {
   create: tenantWriteAccess("media:manage"),
   delete: can("media:manage"),
-  read: tenantReadAccess("cms:read"),
+  read: publicRead,
   update: tenantWriteAccess("media:manage"),
 };
 
 export const settingsAccess = {
-  read: tenantReadAccess("settings:manage"),
+  read: publicRead,
   update: can("settings:manage"),
 };

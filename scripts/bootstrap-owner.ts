@@ -63,7 +63,9 @@ async function main() {
   });
 
   if (existingUser) {
-    throw new Error("A user with OWNER_EMAIL already exists. Refusing to reuse an existing identity.");
+    throw new Error(
+      "A user with OWNER_EMAIL already exists. Refusing to reuse an existing identity.",
+    );
   }
 
   const baseSlug = createOrganizationSlug(input.organizationName);

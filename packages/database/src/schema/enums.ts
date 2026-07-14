@@ -45,6 +45,38 @@ export const websiteStatusEnum = pgEnum("website_status", [
   "archived",
 ]);
 
+export const websiteTypeEnum = pgEnum("website_type", [
+  "wordpress",
+  "sharoz_connected",
+  "external_legacy",
+]);
+
+export const websiteModuleKeyEnum = pgEnum("website_module_key", [
+  "blog",
+  "forms",
+  "media",
+  "seo",
+  "catalog",
+  "orders",
+  "customers",
+  "booking",
+]);
+
+export const websiteApiCredentialStatusEnum = pgEnum("website_api_credential_status", [
+  "active",
+  "revoked",
+]);
+
+export const websiteEnvironmentTypeEnum = pgEnum("website_environment_type", [
+  "staging",
+  "production",
+]);
+
+export const websiteEnvironmentStatusEnum = pgEnum("website_environment_status", [
+  "active",
+  "inactive",
+]);
+
 export const deploymentStatusEnum = pgEnum("deployment_status", [
   "not_configured",
   "pending",
@@ -109,6 +141,8 @@ export const contentPlaceholderStatusEnum = pgEnum("content_placeholder_status",
   "published",
   "archived",
 ]);
+
+export const blogPostStatusEnum = pgEnum("blog_post_status", ["draft", "published", "archived"]);
 
 export const formFieldTypeEnum = pgEnum("form_field_type", [
   "text",

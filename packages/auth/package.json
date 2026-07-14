@@ -7,13 +7,15 @@
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
     "./bootstrap": "./src/bootstrap.ts",
+    "./environment-access": "./src/environment-access.ts",
     "./guards": "./src/guards.ts",
     "./middleware": "./src/middleware.ts",
     "./organizations": "./src/organizations.ts",
     "./permissions": "./src/permissions.ts",
     "./redirects": "./src/redirects.ts",
     "./server": "./src/server.ts",
-    "./session": "./src/session.ts"
+    "./session": "./src/session.ts",
+    "./website-credentials": "./src/website-credentials.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

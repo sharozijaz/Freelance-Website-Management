@@ -1,10 +1,11 @@
 import type { ActivityItem } from "./types";
+import { toDashboardDate } from "./dates";
 
 interface AuditLogRow {
   action: string;
   actor?: { name: string | null; email: string } | null;
   actorUserId: string | null;
-  createdAt: Date;
+  createdAt: Date | string;
   id: string;
   organizationId: string;
   resourceId: string | null;
@@ -150,7 +151,7 @@ export function presentAuditLog(row: AuditLogRow): ActivityItem {
     actor,
     description: mapped.description,
     id: row.id,
-    occurredAt: row.createdAt,
+    occurredAt: toDashboardDate(row.createdAt) ?? new Date(0),
     organizationId: row.organizationId,
     resourceId: row.resourceId,
     resourceType: row.resourceType,

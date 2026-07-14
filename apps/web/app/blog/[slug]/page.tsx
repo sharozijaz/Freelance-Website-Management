@@ -17,7 +17,13 @@ interface PostPageProps {
 }
 
 export async function generateStaticParams() {
-  const slugs = await getAllPostSlugs({ organizationId: process.env.WEB_ORGANIZATION_ID ?? null });
+  let slugs: string[] = [];
+
+  try {
+    slugs = await getAllPostSlugs({ organizationId: process.env.WEB_ORGANIZATION_ID ?? null });
+  } catch (error) {
+    console.warn("Skipping static post params because Payload CMS is unavailable.", error);
+  }
 
   return slugs.map((slug) => ({ slug }));
 }

@@ -1,5 +1,23 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalPassThroughEnv": [
+    "AUTH_TRUSTED_ORIGINS",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_URL",
+    "CMS_DEFAULT_ORGANIZATION_ID",
+    "CMS_DEFAULT_WEBSITE_ID",
+    "DATABASE_URL",
+    "NEXT_PUBLIC_APP_URL",
+    "NEXT_PUBLIC_WEB_URL",
+    "NEXT_PUBLIC_WEBSITE_URL",
+    "PAYLOAD_API_URL",
+    "PAYLOAD_SECRET",
+    "WEB_ORGANIZATION_ID",
+    "WEB_ORGANIZATION_SLUG",
+    "WEBSITE_PREVIEW_SECRET",
+    "WEBSITE_REVALIDATION_SECRET",
+    "WEBSITE_SLUG"
+  ],
   "ui": "tui",
   "tasks": {
     "build": {

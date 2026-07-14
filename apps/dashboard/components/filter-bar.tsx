@@ -12,7 +12,10 @@ export function FilterBar({
   statuses: string[];
 }) {
   return (
-    <form className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3 md:flex-row" method="get">
+    <form
+      className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3 md:flex-row"
+      method="get"
+    >
       <Input
         aria-label="Search"
         className="md:max-w-xs"

@@ -12,7 +12,11 @@ export function isFormFieldType(value: string): value is FormFieldDefinition["ty
 }
 
 export function normalizeFieldName(value: string) {
-  return value.trim().toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "");
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, "_")
+    .replace(/^_+|_+$/g, "");
 }
 
 function safeString(value: unknown): string {
@@ -62,7 +66,9 @@ export function normalizeFormDefinition(input: WebsiteFormDefinitionLike) {
     name: input.name ?? "Website form",
     slug: typeof input.slug === "string" ? input.slug : null,
     successMessage:
-      typeof input.successMessage === "string" ? input.successMessage : "Thanks, your submission was received.",
+      typeof input.successMessage === "string"
+        ? input.successMessage
+        : "Thanks, your submission was received.",
   };
 }
 

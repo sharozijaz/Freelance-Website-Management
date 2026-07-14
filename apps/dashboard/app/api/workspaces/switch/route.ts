@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createActiveOrganizationCookieHeader } from "@agency/auth/session";
 import { switchActiveOrganization } from "@agency/auth/organizations";
 import { database } from "@/lib/auth";
+import { toSafeErrorMessage } from "@/lib/errors";
 import { requireDashboardSessionContext } from "@/lib/session";
 
 export async function POST(request: Request) {
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
       });
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Workspace could not be switched.";
+    const message = toSafeErrorMessage(error, "Workspace could not be switched.");
     redirect(`${returnTo}?error=${encodeURIComponent(message)}`);
   }
 

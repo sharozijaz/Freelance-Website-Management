@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc --noEmit",
+    "dev": "next dev --port 3001",
+    "build": "next build",
+    "start": "next start --port 3001",
     "lint": "eslint .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -15,14 +16,20 @@
     "@agency/database": "workspace:*",
     "@agency/lib": "workspace:*",
     "@payloadcms/db-postgres": "^3.85.2",
+    "@payloadcms/next": "^3.85.2",
     "@payloadcms/richtext-lexical": "^3.85.2",
+    "next": "15.4.11",
     "payload": "^3.50.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "sharp": "^0.35.3"
   },
   "devDependencies": {
     "@agency/eslint-config": "workspace:*",
     "@agency/typescript-config": "workspace:*",
     "@types/node": "^24.1.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "eslint": "^9.31.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",

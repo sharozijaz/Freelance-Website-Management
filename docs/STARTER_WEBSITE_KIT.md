@@ -1,5 +1,7 @@
 # Starter Website Kit
 
+> **V2 legacy notice:** This document describes the V1 Starter Website Kit inside `apps/web`. V2 custom public websites own their own React sections and are not required to use `@agency/ui`, the dashboard design system, Payload blocks, or the V1 starter kit. See [ADR-001](adr/ADR-001-V2-PLATFORM-ARCHITECTURE.md) and [V1 Legacy Boundaries](V1_LEGACY_BOUNDARIES.md).
+
 Milestone 9 introduces the first production-ready section pack for the Agency Website Platform. These sections are CMS-driven blocks that register with the shared Block Engine and render through the Website Rendering Engine.
 
 ## Purpose

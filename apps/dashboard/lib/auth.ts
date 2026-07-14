@@ -1,10 +1,8 @@
 import { createAuth } from "@agency/auth/server";
-import { createDatabaseClient } from "@agency/database";
+import { requireProductionEnv } from "@agency/lib/env";
+import { database } from "./database";
 
-const database = createDatabaseClient({
-  connectionString:
-    process.env.DATABASE_URL ?? "postgres://postgres:postgres@localhost:5432/agency_platform",
-});
+requireProductionEnv(["BETTER_AUTH_SECRET", "BETTER_AUTH_URL"], "Dashboard");
 
 export const auth = createAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",

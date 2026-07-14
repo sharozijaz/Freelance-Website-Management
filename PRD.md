@@ -1,5 +1,7 @@
 # Agency Website Platform PRD
 
+> **V2 legacy notice:** This PRD is the historical V1 product specification. V2 keeps the agency control-plane intent but supersedes the reusable Payload page-builder direction. For active V2 boundaries, use [ADR-001: V2 Platform Architecture](docs/adr/ADR-001-V2-PLATFORM-ARCHITECTURE.md), [V1 Legacy Boundaries](docs/V1_LEGACY_BOUNDARIES.md), and [V2 Architecture Guardrails](docs/V2_ARCHITECTURE_GUARDRAILS.md).
+
 ## 1. Product Vision
 
 ### Purpose

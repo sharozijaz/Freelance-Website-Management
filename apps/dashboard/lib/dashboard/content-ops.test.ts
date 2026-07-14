@@ -13,6 +13,7 @@ describe("content operations utilities", () => {
       helpText: null,
       label: "Email Address",
       name: "email_address",
+      options: [],
       placeholder: null,
       required: true,
       type: "email",
@@ -21,6 +22,19 @@ describe("content operations utilities", () => {
 
   it("rejects unsupported form fields", () => {
     expect(() => normalizeFormField({ label: "Name", type: "file" })).toThrow(FormValidationError);
+  });
+
+  it("validates select field options", () => {
+    expect(
+      normalizeFormField({
+        label: "Topic",
+        options: [{ label: "Sales", value: "sales" }],
+        type: "select",
+      }),
+    ).toMatchObject({ options: [{ label: "Sales", value: "sales" }] });
+    expect(() => normalizeFormField({ label: "Topic", type: "select" })).toThrow(
+      FormValidationError,
+    );
   });
 
   it("allowlists submission fields", () => {

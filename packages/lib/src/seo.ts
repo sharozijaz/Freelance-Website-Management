@@ -88,7 +88,6 @@ export interface NormalizedSeoMetadata {
 
 export interface SeoFinding {
   actionHref?: string;
-  cmsEditHref?: string;
   description: string;
   recommendedAction: string;
   resourceId: string;
@@ -126,7 +125,9 @@ function imageUrl(value: SeoImage | string | null | undefined): string | null {
 export function applyTitleTemplate(title: string, template?: string | null): string {
   const safeTemplate = cleanString(template);
   if (!safeTemplate) return title;
-  return safeTemplate.includes("%s") ? safeTemplate.replace("%s", title) : `${title} | ${safeTemplate}`;
+  return safeTemplate.includes("%s")
+    ? safeTemplate.replace("%s", title)
+    : `${title} | ${safeTemplate}`;
 }
 
 export function resolveCanonicalUrl({
@@ -176,7 +177,9 @@ export function resolveWebsiteCanonicalBase({
 }): string | null {
   const domain = cleanString(primaryDomain);
   if (domain) {
-    return resolveCanonicalUrl({ baseUrl: `https://${domain}`, path: "/" })?.replace(/\/$/, "") ?? null;
+    return (
+      resolveCanonicalUrl({ baseUrl: `https://${domain}`, path: "/" })?.replace(/\/$/, "") ?? null
+    );
   }
 
   const deployedUrl = cleanString(productionUrl);
@@ -200,7 +203,8 @@ export function normalizeSeoMetadata({
 }): NormalizedSeoMetadata {
   const seo = content?.seo;
   const fallbackTitle = cleanString(content?.title) ?? cleanString(website.siteTitle) ?? "Website";
-  const title = cleanString(seo?.metaTitle) ?? applyTitleTemplate(fallbackTitle, website.titleTemplate);
+  const title =
+    cleanString(seo?.metaTitle) ?? applyTitleTemplate(fallbackTitle, website.titleTemplate);
   const description =
     cleanString(seo?.metaDescription) ??
     cleanString(content?.excerpt) ??
@@ -247,13 +251,16 @@ export function normalizeSeoMetadata({
   };
 }
 
-function finding(input: Omit<SeoFinding, "recommendedAction" | "title"> & {
-  recommendedAction?: string;
-  title?: string;
-}): SeoFinding {
+function finding(
+  input: Omit<SeoFinding, "recommendedAction" | "title"> & {
+    recommendedAction?: string;
+    title?: string;
+  },
+): SeoFinding {
   return {
     ...input,
-    recommendedAction: input.recommendedAction ?? "Open the resource in Payload CMS and update SEO metadata.",
+    recommendedAction:
+      input.recommendedAction ?? "Open the resource in the dashboard and update SEO metadata.",
     title: input.title ?? input.description,
   };
 }
@@ -282,7 +289,12 @@ export function runSeoRules({
   const slugMap = new Map<string, SeoContentResource[]>();
 
   for (const resource of resources) {
-    const path = resource.type === "post" ? `/blog/${resource.slug}` : resource.slug === "home" ? "/" : `/${resource.slug}`;
+    const path =
+      resource.type === "post"
+        ? `/blog/${resource.slug}`
+        : resource.slug === "home"
+          ? "/"
+          : `/${resource.slug}`;
     const normalized = normalizeSeoMetadata({ content: resource, path, website });
     const isPublished = resource.status === "published" || resource.status === undefined;
 
@@ -303,55 +315,155 @@ export function runSeoRules({
     } satisfies Pick<SeoFinding, "resourceId" | "resourceTitle" | "resourceType" | "websiteId">;
 
     if (!cleanString(resource.seo?.metaTitle)) {
-      findings.push(finding({ ...base, description: `${resource.title} is missing an explicit SEO title.`, ruleId: "missing_seo_title", severity: "warning" }));
+      findings.push(
+        finding({
+          ...base,
+          description: `${resource.title} is missing an explicit SEO title.`,
+          ruleId: "missing_seo_title",
+          severity: "warning",
+        }),
+      );
     }
     if (normalized.title.length < seoRuleThresholds.titleMin) {
-      findings.push(finding({ ...base, description: "SEO title is shorter than the configured threshold.", ruleId: "seo_title_too_short", severity: "recommendation" }));
+      findings.push(
+        finding({
+          ...base,
+          description: "SEO title is shorter than the configured threshold.",
+          ruleId: "seo_title_too_short",
+          severity: "recommendation",
+        }),
+      );
     }
     if (normalized.title.length > seoRuleThresholds.titleMax) {
-      findings.push(finding({ ...base, description: "SEO title is longer than the configured threshold.", ruleId: "seo_title_too_long", severity: "warning" }));
+      findings.push(
+        finding({
+          ...base,
+          description: "SEO title is longer than the configured threshold.",
+          ruleId: "seo_title_too_long",
+          severity: "warning",
+        }),
+      );
     }
     if (!normalized.description) {
-      findings.push(finding({ ...base, description: `${resource.title} is missing a meta description.`, ruleId: "missing_meta_description", severity: "warning" }));
+      findings.push(
+        finding({
+          ...base,
+          description: `${resource.title} is missing a meta description.`,
+          ruleId: "missing_meta_description",
+          severity: "warning",
+        }),
+      );
     } else if (normalized.description.length < seoRuleThresholds.metaDescriptionMin) {
-      findings.push(finding({ ...base, description: "Meta description is shorter than the configured threshold.", ruleId: "meta_description_too_short", severity: "recommendation" }));
+      findings.push(
+        finding({
+          ...base,
+          description: "Meta description is shorter than the configured threshold.",
+          ruleId: "meta_description_too_short",
+          severity: "recommendation",
+        }),
+      );
     } else if (normalized.description.length > seoRuleThresholds.metaDescriptionMax) {
-      findings.push(finding({ ...base, description: "Meta description is longer than the configured threshold.", ruleId: "meta_description_too_long", severity: "warning" }));
+      findings.push(
+        finding({
+          ...base,
+          description: "Meta description is longer than the configured threshold.",
+          ruleId: "meta_description_too_long",
+          severity: "warning",
+        }),
+      );
     }
     if (!normalized.canonicalUrl) {
-      findings.push(finding({ ...base, description: `${resource.title} does not resolve to a valid canonical URL.`, ruleId: "missing_canonical_url", severity: "error" }));
-    } else if (resource.seo?.canonicalUrl && !resolveCanonicalUrl({ explicitCanonical: resource.seo.canonicalUrl, path })) {
-      findings.push(finding({ ...base, description: "Canonical override is malformed or unsafe.", ruleId: "invalid_canonical_url", severity: "error" }));
+      findings.push(
+        finding({
+          ...base,
+          description: `${resource.title} does not resolve to a valid canonical URL.`,
+          ruleId: "missing_canonical_url",
+          severity: "error",
+        }),
+      );
+    } else if (
+      resource.seo?.canonicalUrl &&
+      !resolveCanonicalUrl({ explicitCanonical: resource.seo.canonicalUrl, path })
+    ) {
+      findings.push(
+        finding({
+          ...base,
+          description: "Canonical override is malformed or unsafe.",
+          ruleId: "invalid_canonical_url",
+          severity: "error",
+        }),
+      );
     }
     if (isPublished && !normalized.robots.index) {
-      findings.push(finding({ ...base, description: "Published content is marked noindex.", ruleId: "published_noindex", severity: "error" }));
+      findings.push(
+        finding({
+          ...base,
+          description: "Published content is marked noindex.",
+          ruleId: "published_noindex",
+          severity: "error",
+        }),
+      );
     }
     if (!normalized.socialImage) {
-      findings.push(finding({ ...base, description: "Open Graph image is missing.", ruleId: "missing_open_graph_image", severity: "recommendation" }));
+      findings.push(
+        finding({
+          ...base,
+          description: "Open Graph image is missing.",
+          ruleId: "missing_open_graph_image",
+          severity: "recommendation",
+        }),
+      );
     }
     const h1Count = countDetectableH1(resource.blocks);
     if (h1Count === 0) {
-      findings.push(finding({ ...base, description: "No detectable page H1 was found in supported block content.", ruleId: "missing_h1", severity: "warning" }));
+      findings.push(
+        finding({
+          ...base,
+          description: "No detectable page H1 was found in supported block content.",
+          ruleId: "missing_h1",
+          severity: "warning",
+        }),
+      );
     } else if (h1Count && h1Count > 1) {
-      findings.push(finding({ ...base, description: "Multiple detectable H1 headings were found.", ruleId: "multiple_h1", severity: "warning" }));
+      findings.push(
+        finding({
+          ...base,
+          description: "Multiple detectable H1 headings were found.",
+          ruleId: "multiple_h1",
+          severity: "warning",
+        }),
+      );
     }
-    if (resource.type === "page" && Array.isArray(resource.blocks) && resource.blocks.length === 0) {
-      findings.push(finding({ ...base, description: "Page content is empty.", ruleId: "empty_page_content", severity: "error" }));
+    if (
+      resource.type === "page" &&
+      Array.isArray(resource.blocks) &&
+      resource.blocks.length === 0
+    ) {
+      findings.push(
+        finding({
+          ...base,
+          description: "Page content is empty.",
+          ruleId: "empty_page_content",
+          severity: "error",
+        }),
+      );
     }
   }
 
   for (const [slug, duplicates] of slugMap) {
     if (duplicates.length > 1) {
       for (const resource of duplicates) {
-        findings.push(finding({
-          description: `Duplicate slug "${slug}" exists within this website.`,
-          resourceId: resource.id,
-          resourceTitle: resource.title,
-          resourceType: resource.type,
-          ruleId: "duplicate_slug",
-          severity: "error",
-          websiteId: resource.websiteId ?? website.id,
-        }));
+        findings.push(
+          finding({
+            description: `Duplicate slug "${slug}" exists within this website.`,
+            resourceId: resource.id,
+            resourceTitle: resource.title,
+            resourceType: resource.type,
+            ruleId: "duplicate_slug",
+            severity: "error",
+            websiteId: resource.websiteId ?? website.id,
+          }),
+        );
       }
     }
   }
@@ -359,15 +471,17 @@ export function runSeoRules({
   for (const [title, duplicates] of titleMap) {
     if (duplicates.length > 1) {
       for (const resource of duplicates) {
-        findings.push(finding({
-          description: `Duplicate SEO title "${title}" exists within this website.`,
-          resourceId: resource.id,
-          resourceTitle: resource.title,
-          resourceType: resource.type,
-          ruleId: "duplicate_seo_title",
-          severity: "warning",
-          websiteId: resource.websiteId ?? website.id,
-        }));
+        findings.push(
+          finding({
+            description: `Duplicate SEO title "${title}" exists within this website.`,
+            resourceId: resource.id,
+            resourceTitle: resource.title,
+            resourceType: resource.type,
+            ruleId: "duplicate_seo_title",
+            severity: "warning",
+            websiteId: resource.websiteId ?? website.id,
+          }),
+        );
       }
     }
   }
@@ -375,15 +489,17 @@ export function runSeoRules({
   for (const [description, duplicates] of descriptionMap) {
     if (duplicates.length > 1) {
       for (const resource of duplicates) {
-        findings.push(finding({
-          description: `Duplicate meta description "${description}" exists within this website.`,
-          resourceId: resource.id,
-          resourceTitle: resource.title,
-          resourceType: resource.type,
-          ruleId: "duplicate_meta_description",
-          severity: "warning",
-          websiteId: resource.websiteId ?? website.id,
-        }));
+        findings.push(
+          finding({
+            description: `Duplicate meta description "${description}" exists within this website.`,
+            resourceId: resource.id,
+            resourceTitle: resource.title,
+            resourceType: resource.type,
+            ruleId: "duplicate_meta_description",
+            severity: "warning",
+            websiteId: resource.websiteId ?? website.id,
+          }),
+        );
       }
     }
   }

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { updateSubmissionStatus, type SubmissionStatus } from "@/lib/dashboard/content-ops";
+import { toSafeErrorMessage } from "@/lib/errors";
 import { requireDashboardSessionContext } from "@/lib/session";
 
 const allowedStatuses = new Set<SubmissionStatus>(["archived", "read", "spam"]);
@@ -29,7 +30,7 @@ export async function POST(
       submissionId,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Submission could not be updated.";
+    const message = toSafeErrorMessage(error, "Submission could not be updated.");
     returnTo = `${returnTo}?error=${encodeURIComponent(message)}`;
   }
 

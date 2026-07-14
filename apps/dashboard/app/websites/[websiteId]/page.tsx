@@ -1,17 +1,18 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ExternalLink, FileText, Globe2, Images, Inbox, Send } from "lucide-react";
+import { FileText, Globe2, Images, Inbox, Send } from "lucide-react";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState } from "@agency/ui";
+import { websiteTypeDescriptions, websiteTypeLabels, websiteTypes } from "@agency/lib/modules";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { presentAuditLog } from "@/lib/dashboard/activity";
 import { getWebsiteOperationalSummary } from "@/lib/dashboard/content-ops";
+import { formatDashboardDateTime } from "@/lib/dashboard/dates";
+import { isWebsiteModuleEnabled } from "@/lib/dashboard/modules";
 import { getWebsiteDetail, projectStatusLabels } from "@/lib/dashboard/projects";
 import { getDashboardSessionContext } from "@/lib/session";
-
-const cmsBaseUrl = process.env.NEXT_PUBLIC_CMS_URL ?? "http://localhost:3001";
 
 export default async function WebsiteDetailPage({
   params,
@@ -29,9 +30,10 @@ export default async function WebsiteDetailPage({
 
   const { websiteId } = await params;
   const request = createDashboardRequest(context);
-  const [detail, operations] = await Promise.all([
+  const [detail, operations, blogEnabled] = await Promise.all([
     getWebsiteDetail({ database, request, websiteId }),
     getWebsiteOperationalSummary({ database, request, websiteId }),
+    isWebsiteModuleEnabled({ database, moduleKey: "blog", request, websiteId }).catch(() => false),
   ]);
   const { project, website } = detail;
   const activity = detail.activity.map(presentAuditLog);
@@ -46,13 +48,30 @@ export default async function WebsiteDetailPage({
             </Button>
           ) : null}
           <Button asChild size="sm" variant="outline">
-            <a href={`${cmsBaseUrl}/admin`}>Open CMS</a>
-          </Button>
-          <Button asChild size="sm" variant="outline">
             <Link href={`/websites/${website.id}/hosting`}>Hosting</Link>
           </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/websites/${website.id}/domains`}>Domains</Link>
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/websites/${website.id}/launch`}>Launch</Link>
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/websites/${website.id}/environments`}>Environments</Link>
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/websites/${website.id}/modules`}>Modules</Link>
+          </Button>
+          {website.websiteType === "sharoz_connected" && blogEnabled ? (
+            <Button asChild size="sm" variant="outline">
+              <Link href={`/websites/${website.id}/blog`}>Blog</Link>
+            </Button>
+          ) : null}
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/websites/${website.id}/developer`}>Developer</Link>
+          </Button>
           <Button asChild size="sm">
-            <a href={`${cmsBaseUrl}/admin/collections/pages/create`}>Create Page</a>
+            <Link href={`/websites/${website.id}/seo`}>SEO</Link>
           </Button>
         </>
       }
@@ -61,12 +80,56 @@ export default async function WebsiteDetailPage({
     >
       <section className="grid gap-4 xl:grid-cols-3">
         <InfoCard label="Client" value={website.organization.name} />
+        <InfoCard label="Type" value={websiteTypeLabels[website.websiteType]} />
         <InfoCard label="Status" value={website.status} />
         <InfoCard label="Deployment" value={website.deploymentStatus} />
         <InfoCard label="Primary domain" value={website.primaryDomain ?? "Not connected"} />
+        <InfoCard
+          label="Launched"
+          value={formatDashboardDateTime(website.launchedAt, "Not launched")}
+        />
         <InfoCard label="Slug" value={website.slug} />
         <InfoCard label="Production URL" value={website.productionUrl ?? "Not configured"} />
       </section>
+
+      <Card>
+        <CardHeader className="p-4">
+          <CardTitle className="text-base">Website Type</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 pt-0">
+          <form
+            action={`/api/websites/${website.id}`}
+            className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]"
+            method="post"
+          >
+            <div>
+              <label className="text-sm font-medium" htmlFor="websiteType">
+                Integration model
+              </label>
+              <select
+                className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                defaultValue={website.websiteType}
+                id="websiteType"
+                name="websiteType"
+                required
+              >
+                {websiteTypes.map((websiteType) => (
+                  <option key={websiteType} value={websiteType}>
+                    {websiteTypeLabels[websiteType]}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {websiteTypeDescriptions[website.websiteType]}
+              </p>
+            </div>
+            <input name="returnTo" type="hidden" value={`/websites/${website.id}`} />
+            <Button className="self-end" type="submit">
+              Save Type
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <OperationCard
@@ -145,15 +208,26 @@ export default async function WebsiteDetailPage({
               <EmptyState title="No content records for this website" />
             ) : (
               detail.content.map((item) => (
-                <div className="flex items-center justify-between gap-3 py-3" key={`${item.type}-${item.id}`}>
+                <div
+                  className="flex items-center justify-between gap-3 py-3"
+                  key={`${item.type}-${item.id}`}
+                >
                   <div>
                     <p className="text-sm font-medium">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">{item.type} · {item.status}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.type} · {item.status}
+                    </p>
                   </div>
                   <Button asChild size="sm" variant="outline">
-                    <a href={`${cmsBaseUrl}/admin/collections/${item.type === "page" ? "pages" : "posts"}/${item.id}`}>
-                      Edit <ExternalLink className="size-3" />
-                    </a>
+                    <Link
+                      href={
+                        item.type === "post"
+                          ? `/websites/${website.id}/blog/${item.id}`
+                          : `/websites/${website.id}`
+                      }
+                    >
+                      {item.type === "post" ? "Edit" : "Review"}
+                    </Link>
                   </Button>
                 </div>
               ))
@@ -173,7 +247,9 @@ export default async function WebsiteDetailPage({
             activity.map((item) => (
               <div className="py-3" key={item.id}>
                 <p className="text-sm font-medium">{item.description}</p>
-                <p className="text-xs text-muted-foreground">{item.occurredAt.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatDashboardDateTime(item.occurredAt)}
+                </p>
               </div>
             ))
           )}

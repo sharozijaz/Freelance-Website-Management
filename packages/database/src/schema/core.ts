@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  foreignKey,
   index,
   jsonb,
   pgTable,
@@ -25,7 +26,12 @@ import {
   projectStatusEnum,
   sslStateEnum,
   userStatusEnum,
+  websiteApiCredentialStatusEnum,
+  websiteEnvironmentStatusEnum,
+  websiteEnvironmentTypeEnum,
+  websiteModuleKeyEnum,
   websiteStatusEnum,
+  websiteTypeEnum,
 } from "./enums";
 
 const timestamps = {
@@ -180,21 +186,146 @@ export const websites = pgTable(
     name: text("name").notNull(),
     slug: text("slug").notNull(),
     status: websiteStatusEnum("status").notNull().default("draft"),
+    websiteType: websiteTypeEnum("website_type").notNull().default("external_legacy"),
     theme: jsonb("theme").$type<Record<string, unknown>>().notNull().default({}),
     primaryDomain: text("primary_domain"),
     deploymentStatus: deploymentStatusEnum("deployment_status").notNull().default("not_configured"),
     productionUrl: text("production_url"),
     previewUrl: text("preview_url"),
+    launchedAt: timestamp("launched_at", { withTimezone: true }),
     ...timestamps,
     ...softDelete,
   },
   (table) => [
     uniqueIndex("websites_organization_slug_idx").on(table.organizationId, table.slug),
+    uniqueIndex("websites_id_organization_idx").on(table.id, table.organizationId),
     index("websites_organization_status_idx").on(table.organizationId, table.status),
+    index("websites_organization_type_idx").on(table.organizationId, table.websiteType),
     index("websites_organization_deployment_status_idx").on(
       table.organizationId,
       table.deploymentStatus,
     ),
+  ],
+);
+
+export const websiteModules = pgTable(
+  "website_modules",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    websiteId: uuid("website_id")
+      .notNull()
+      .references(() => websites.id, { onDelete: "cascade" }),
+    moduleKey: websiteModuleKeyEnum("module_key").notNull(),
+    enabled: boolean("enabled").notNull().default(false),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("website_modules_website_module_idx").on(table.websiteId, table.moduleKey),
+    index("website_modules_organization_website_idx").on(table.organizationId, table.websiteId),
+    index("website_modules_organization_module_idx").on(table.organizationId, table.moduleKey),
+    index("website_modules_website_enabled_idx").on(table.websiteId, table.enabled),
+    foreignKey({
+      columns: [table.websiteId, table.organizationId],
+      foreignColumns: [websites.id, websites.organizationId],
+      name: "website_modules_website_organization_fk",
+    }).onDelete("cascade"),
+  ],
+);
+
+export const websiteEnvironments = pgTable(
+  "website_environments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    websiteId: uuid("website_id")
+      .notNull()
+      .references(() => websites.id, { onDelete: "cascade" }),
+    type: websiteEnvironmentTypeEnum("type").notNull(),
+    name: text("name").notNull(),
+    status: websiteEnvironmentStatusEnum("status").notNull().default("active"),
+    baseUrl: text("base_url"),
+    previewAccessTokenHash: text("preview_access_token_hash"),
+    previewAccessTokenRotatedAt: timestamp("preview_access_token_rotated_at", {
+      withTimezone: true,
+    }),
+    stagingAccessEnabled: boolean("staging_access_enabled").notNull().default(false),
+    stagingAccessSecretHash: text("staging_access_secret_hash"),
+    stagingAccessSecretRotatedAt: timestamp("staging_access_secret_rotated_at", {
+      withTimezone: true,
+    }),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("website_environments_website_type_idx").on(table.websiteId, table.type),
+    uniqueIndex("website_environments_id_website_org_idx").on(
+      table.id,
+      table.websiteId,
+      table.organizationId,
+    ),
+    index("website_environments_organization_website_idx").on(
+      table.organizationId,
+      table.websiteId,
+    ),
+    foreignKey({
+      columns: [table.websiteId, table.organizationId],
+      foreignColumns: [websites.id, websites.organizationId],
+      name: "website_environments_website_organization_fk",
+    }).onDelete("cascade"),
+  ],
+);
+
+export const websiteApiCredentials = pgTable(
+  "website_api_credentials",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    websiteId: uuid("website_id")
+      .notNull()
+      .references(() => websites.id, { onDelete: "cascade" }),
+    websiteEnvironmentId: uuid("website_environment_id")
+      .notNull()
+      .references(() => websiteEnvironments.id, { onDelete: "restrict" }),
+    label: text("label").notNull(),
+    publicKey: text("public_key").notNull(),
+    secretHash: text("secret_hash").notNull(),
+    status: websiteApiCredentialStatusEnum("status").notNull().default("active"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("website_api_credentials_public_key_idx").on(table.publicKey),
+    index("website_api_credentials_organization_website_idx").on(
+      table.organizationId,
+      table.websiteId,
+    ),
+    index("website_api_credentials_website_status_idx").on(table.websiteId, table.status),
+    index("website_api_credentials_environment_idx").on(table.websiteEnvironmentId),
+    foreignKey({
+      columns: [table.websiteId, table.organizationId],
+      foreignColumns: [websites.id, websites.organizationId],
+      name: "website_api_credentials_website_organization_fk",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.websiteEnvironmentId, table.websiteId, table.organizationId],
+      foreignColumns: [
+        websiteEnvironments.id,
+        websiteEnvironments.websiteId,
+        websiteEnvironments.organizationId,
+      ],
+      name: "website_api_credentials_environment_scope_fk",
+    }).onDelete("restrict"),
   ],
 );
 
@@ -208,6 +339,9 @@ export const domains = pgTable(
     websiteId: uuid("website_id")
       .notNull()
       .references(() => websites.id, { onDelete: "cascade" }),
+    websiteEnvironmentId: uuid("website_environment_id")
+      .notNull()
+      .references(() => websiteEnvironments.id, { onDelete: "restrict" }),
     domain: text("domain").notNull(),
     verificationStatus: domainVerificationStatusEnum("verification_status")
       .notNull()
@@ -238,8 +372,18 @@ export const domains = pgTable(
   (table) => [
     uniqueIndex("domains_domain_idx").on(table.domain),
     index("domains_organization_website_idx").on(table.organizationId, table.websiteId),
+    index("domains_environment_idx").on(table.websiteEnvironmentId),
     index("domains_organization_primary_idx").on(table.organizationId, table.isPrimary),
     index("domains_verification_status_idx").on(table.verificationStatus),
+    foreignKey({
+      columns: [table.websiteEnvironmentId, table.websiteId, table.organizationId],
+      foreignColumns: [
+        websiteEnvironments.id,
+        websiteEnvironments.websiteId,
+        websiteEnvironments.organizationId,
+      ],
+      name: "domains_environment_scope_fk",
+    }).onDelete("restrict"),
   ],
 );
 
@@ -284,6 +428,9 @@ export const deployments = pgTable(
     websiteId: uuid("website_id")
       .notNull()
       .references(() => websites.id, { onDelete: "cascade" }),
+    websiteEnvironmentId: uuid("website_environment_id")
+      .notNull()
+      .references(() => websiteEnvironments.id, { onDelete: "restrict" }),
     providerConnectionId: uuid("provider_connection_id").references(
       () => hostingProviderConnections.id,
       { onDelete: "set null" },
@@ -308,11 +455,24 @@ export const deployments = pgTable(
     ...softDelete,
   },
   (table) => [
-    uniqueIndex("deployments_provider_deployment_idx").on(table.provider, table.providerDeploymentId),
+    uniqueIndex("deployments_provider_deployment_idx").on(
+      table.provider,
+      table.providerDeploymentId,
+    ),
     index("deployments_organization_website_idx").on(table.organizationId, table.websiteId),
+    index("deployments_environment_idx").on(table.websiteEnvironmentId),
     index("deployments_website_status_idx").on(table.websiteId, table.status),
     index("deployments_provider_connection_idx").on(table.providerConnectionId),
     index("deployments_created_at_idx").on(table.createdAt),
+    foreignKey({
+      columns: [table.websiteEnvironmentId, table.websiteId, table.organizationId],
+      foreignColumns: [
+        websiteEnvironments.id,
+        websiteEnvironments.websiteId,
+        websiteEnvironments.organizationId,
+      ],
+      name: "deployments_environment_scope_fk",
+    }).onDelete("restrict"),
   ],
 );
 
@@ -430,6 +590,9 @@ export const organizationRelations = relations(organizations, ({ many }) => ({
   memberships: many(memberships),
   projectAssignments: many(projectAssignments),
   projects: many(projects),
+  websiteApiCredentials: many(websiteApiCredentials),
+  websiteEnvironments: many(websiteEnvironments),
+  websiteModules: many(websiteModules),
   websites: many(websites),
 }));
 
@@ -441,6 +604,7 @@ export const userRelations = relations(users, ({ many }) => ({
   auditLogs: many(auditLogs),
   invitationsSent: many(invitations, { relationName: "invitationsSent" }),
   memberships: many(memberships),
+  websiteApiCredentialsCreated: many(websiteApiCredentials),
 }));
 
 export const authSessionRelations = relations(authSessions, ({ one }) => ({
@@ -475,7 +639,10 @@ export const membershipRelations = relations(memberships, ({ one }) => ({
 export const websiteRelations = relations(websites, ({ many, one }) => ({
   deployments: many(deployments),
   domains: many(domains),
+  environments: many(websiteEnvironments),
   hostingProviderConnections: many(hostingProviderConnections),
+  apiCredentials: many(websiteApiCredentials),
+  modules: many(websiteModules),
   organization: one(organizations, {
     fields: [websites.organizationId],
     references: [organizations.id],
@@ -483,7 +650,55 @@ export const websiteRelations = relations(websites, ({ many, one }) => ({
   projects: many(projects),
 }));
 
+export const websiteEnvironmentRelations = relations(websiteEnvironments, ({ many, one }) => ({
+  credentials: many(websiteApiCredentials),
+  deployments: many(deployments),
+  domains: many(domains),
+  organization: one(organizations, {
+    fields: [websiteEnvironments.organizationId],
+    references: [organizations.id],
+  }),
+  website: one(websites, {
+    fields: [websiteEnvironments.websiteId],
+    references: [websites.id],
+  }),
+}));
+
+export const websiteModuleRelations = relations(websiteModules, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [websiteModules.organizationId],
+    references: [organizations.id],
+  }),
+  website: one(websites, {
+    fields: [websiteModules.websiteId],
+    references: [websites.id],
+  }),
+}));
+
+export const websiteApiCredentialRelations = relations(websiteApiCredentials, ({ one }) => ({
+  createdBy: one(users, {
+    fields: [websiteApiCredentials.createdByUserId],
+    references: [users.id],
+  }),
+  organization: one(organizations, {
+    fields: [websiteApiCredentials.organizationId],
+    references: [organizations.id],
+  }),
+  website: one(websites, {
+    fields: [websiteApiCredentials.websiteId],
+    references: [websites.id],
+  }),
+  environment: one(websiteEnvironments, {
+    fields: [websiteApiCredentials.websiteEnvironmentId],
+    references: [websiteEnvironments.id],
+  }),
+}));
+
 export const domainRelations = relations(domains, ({ one }) => ({
+  environment: one(websiteEnvironments, {
+    fields: [domains.websiteEnvironmentId],
+    references: [websiteEnvironments.id],
+  }),
   providerConnection: one(hostingProviderConnections, {
     fields: [domains.providerConnectionId],
     references: [hostingProviderConnections.id],
@@ -514,6 +729,10 @@ export const hostingProviderConnectionRelations = relations(
 );
 
 export const deploymentRelations = relations(deployments, ({ one }) => ({
+  environment: one(websiteEnvironments, {
+    fields: [deployments.websiteEnvironmentId],
+    references: [websiteEnvironments.id],
+  }),
   organization: one(organizations, {
     fields: [deployments.organizationId],
     references: [organizations.id],

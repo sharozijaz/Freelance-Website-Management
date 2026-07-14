@@ -72,6 +72,7 @@ export const sectionIntroFields: Field[] = [
     type: "text",
   },
   {
+    defaultValue: "Section headline",
     name: "headline",
     type: "text",
     required: true,

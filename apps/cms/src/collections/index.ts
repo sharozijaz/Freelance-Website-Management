@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 import { Authors } from "./authors";
 import { Categories } from "./categories";
+import { CmsUsers } from "./cms-users";
 import { Media } from "./media";
 import { Navigation } from "./navigation";
 import { Pages } from "./pages";
@@ -10,6 +11,7 @@ import { SiteSettings } from "./site-settings";
 import { Tags } from "./tags";
 
 export const collections: CollectionConfig[] = [
+  CmsUsers,
   Pages,
   Posts,
   Categories,

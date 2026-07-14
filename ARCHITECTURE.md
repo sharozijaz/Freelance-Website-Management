@@ -1,5 +1,7 @@
 # Agency Website Platform Architecture
 
+> **V2 legacy notice:** This document describes the historical V1 Payload CMS and reusable website-template architecture. It is superseded as active V2 direction by [ADR-001: V2 Platform Architecture](docs/adr/ADR-001-V2-PLATFORM-ARCHITECTURE.md), [V1 Legacy Boundaries](docs/V1_LEGACY_BOUNDARIES.md), and [V2 Architecture Guardrails](docs/V2_ARCHITECTURE_GUARDRAILS.md). Do not use this document to justify new V2 dependencies on Payload page layout blocks, `apps/web` block rendering, platform-controlled page section composition, or requiring public websites to use `@agency/ui`.
+
 ## 1. Folder Structure
 
 The platform should start as a pnpm monorepo with clear application and package boundaries.

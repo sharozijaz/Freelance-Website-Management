@@ -73,8 +73,10 @@ function toDate(value: unknown): Date | null {
 }
 
 function normalizeDeployment(item: Record<string, unknown>): NormalizedProviderDeployment {
-  const id = stringValue(item.uid) ?? stringValue(item.id) ?? stringValue(item.name) ?? crypto.randomUUID();
-  const url = typeof item.url === "string" ? `https://${item.url.replace(/^https?:\/\//, "")}` : null;
+  const id =
+    stringValue(item.uid) ?? stringValue(item.id) ?? stringValue(item.name) ?? crypto.randomUUID();
+  const url =
+    typeof item.url === "string" ? `https://${item.url.replace(/^https?:\/\//, "")}` : null;
 
   return {
     completedAt: toDate(item.ready) ?? null,
@@ -89,7 +91,9 @@ function normalizeDeployment(item: Record<string, unknown>): NormalizedProviderD
 }
 
 async function listVercelDeployments(
-  connection: Parameters<NonNullable<DeploymentProviderAdapter["listDeployments"]>>[0]["connection"],
+  connection: Parameters<
+    NonNullable<DeploymentProviderAdapter["listDeployments"]>
+  >[0]["connection"],
 ) {
   const query = projectQuery(connection.providerProjectId, connection.providerTeamId);
   const response = await fetch(`https://api.vercel.com/v6/deployments?${query}`, {
@@ -137,19 +141,18 @@ export const vercelProviderAdapter: DeploymentProviderAdapter = {
   },
   getProductionURL: async ({ connection }) => {
     const deployments = await listVercelDeployments(connection);
-    return deployments.find((deployment) => deployment.isProduction && deployment.status === "ready")
-      ?.deploymentUrl ?? null;
+    return (
+      deployments.find((deployment) => deployment.isProduction && deployment.status === "ready")
+        ?.deploymentUrl ?? null
+    );
   },
   getProject: async ({ connection }) => {
     if (!connection.providerProjectId) return null;
     const query = connection.providerTeamId ? `?teamId=${connection.providerTeamId}` : "";
     const projectId = requireProjectId(connection);
-    const response = await fetch(
-      `https://api.vercel.com/v9/projects/${projectId}${query}`,
-      {
-        headers: vercelHeaders(),
-      },
-    );
+    const response = await fetch(`https://api.vercel.com/v9/projects/${projectId}${query}`, {
+      headers: vercelHeaders(),
+    });
     if (!response.ok) throw new Error("Vercel project could not be loaded.");
     const payload = (await response.json()) as Record<string, unknown>;
     return {
@@ -158,7 +161,8 @@ export const vercelProviderAdapter: DeploymentProviderAdapter = {
           ? `https://vercel.com/${payload.accountId}/${payload.name}`
           : null,
       name: typeof payload.name === "string" ? payload.name : null,
-      productionUrl: typeof payload.latestDeployments === "string" ? payload.latestDeployments : null,
+      productionUrl:
+        typeof payload.latestDeployments === "string" ? payload.latestDeployments : null,
     };
   },
   getRequiredDNSRecords: (): Promise<DnsInstruction[]> => Promise.resolve(vercelDnsInstructions),
@@ -174,10 +178,12 @@ export const vercelProviderAdapter: DeploymentProviderAdapter = {
     );
     if (!response.ok) throw new Error("Vercel domains could not be loaded.");
     const payload = (await response.json()) as { domains?: Record<string, unknown>[] };
-    return (payload.domains ?? []).map((domain) => ({
-      hostname: stringValue(domain.name) ?? "",
-      verified: Boolean(domain.verified),
-    })).filter((domain) => domain.hostname.length > 0);
+    return (payload.domains ?? [])
+      .map((domain) => ({
+        hostname: stringValue(domain.name) ?? "",
+        verified: Boolean(domain.verified),
+      }))
+      .filter((domain) => domain.hostname.length > 0);
   },
   removeDomain: async ({ connection, hostname }) => {
     const query = connection.providerTeamId ? `?teamId=${connection.providerTeamId}` : "";
@@ -195,15 +201,13 @@ export const vercelProviderAdapter: DeploymentProviderAdapter = {
     Promise.reject(new Error("Vercel deployment triggers require a configured deploy hook URL.")),
   validateConnection: async ({ connection }) => {
     if (!token()) return { message: "VERCEL_API_TOKEN is not configured.", ok: false };
-    if (!connection.providerProjectId) return { message: "Vercel project ID is required.", ok: false };
+    if (!connection.providerProjectId)
+      return { message: "Vercel project ID is required.", ok: false };
     const query = connection.providerTeamId ? `?teamId=${connection.providerTeamId}` : "";
     const projectId = requireProjectId(connection);
-    const response = await fetch(
-      `https://api.vercel.com/v9/projects/${projectId}${query}`,
-      {
-        headers: vercelHeaders(),
-      },
-    );
+    const response = await fetch(`https://api.vercel.com/v9/projects/${projectId}${query}`, {
+      headers: vercelHeaders(),
+    });
     return { ok: response.ok };
   },
   verifyDomain: async ({ connection, hostname }) => {

@@ -18,7 +18,8 @@ interface BuildMetadataInput {
 function getWebsiteSeoDefaults(settings?: SiteSettings | null): WebsiteSeoDefaults {
   return {
     canonicalBaseUrl: settings?.seo?.canonicalBaseUrl ?? websiteBaseUrl,
-    defaultMetaDescription: settings?.seo?.defaultMetaDescription ?? settings?.brand?.tagline ?? null,
+    defaultMetaDescription:
+      settings?.seo?.defaultMetaDescription ?? settings?.brand?.tagline ?? null,
     defaultOgImage: settings?.seo?.defaultOgImage ?? null,
     defaultRobots: settings?.seo?.defaultRobots ?? null,
     locale: settings?.seo?.locale ?? "en_US",
@@ -38,16 +39,16 @@ function toSeoResource(content?: PayloadPage | PayloadPost | null): SeoContentRe
   const post = isPost(content);
 
   return {
-    authorName: typeof content.author === "object" ? content.author.name : null,
+    authorName: content.author && typeof content.author === "object" ? content.author.name : null,
     blocks: "layout" in content ? content.layout : null,
-    excerpt: "excerpt" in content ? content.excerpt ?? null : null,
+    excerpt: "excerpt" in content ? (content.excerpt ?? null) : null,
     featuredImage: content.featuredImage ?? null,
     id: content.id,
     organizationId: content.organizationId,
-    publishedAt: "publishDate" in content ? content.publishDate ?? null : null,
+    publishedAt: "publishDate" in content ? (content.publishDate ?? null) : null,
     seo: content.seo ?? null,
     slug: content.slug,
-    status: (post ? content._status : content.workflowStatus ?? content._status) ?? null,
+    status: (post ? content._status : (content.workflowStatus ?? content._status)) ?? null,
     title: content.title,
     type: post ? "post" : "page",
     websiteId: "websiteId" in content ? content.websiteId : null,
@@ -108,7 +109,10 @@ function getFaqSchema(content: PayloadPage | PayloadPost): Record<string, unknow
       if (!item || typeof item !== "object") return [];
       const question = (item as { question?: unknown }).question;
       const answer = (item as { answer?: unknown }).answer;
-      return typeof question === "string" && typeof answer === "string" && question.trim() && answer.trim()
+      return typeof question === "string" &&
+        typeof answer === "string" &&
+        question.trim() &&
+        answer.trim()
         ? [
             {
               "@type": "Question",
@@ -156,8 +160,18 @@ export function buildStructuredData({
     {
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", item: website.canonicalBaseUrl ?? websiteBaseUrl, name: "Home", position: 1 },
-        { "@type": "ListItem", item: normalized.canonicalUrl ?? pathname, name: content.title, position: 2 },
+        {
+          "@type": "ListItem",
+          item: website.canonicalBaseUrl ?? websiteBaseUrl,
+          name: "Home",
+          position: 1,
+        },
+        {
+          "@type": "ListItem",
+          item: normalized.canonicalUrl ?? pathname,
+          name: content.title,
+          position: 2,
+        },
       ],
     },
   ];

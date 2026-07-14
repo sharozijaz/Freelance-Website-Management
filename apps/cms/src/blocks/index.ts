@@ -41,6 +41,7 @@ export const pageBlocks: Block[] = [
         type: "text",
       },
       {
+        defaultValue: "Hero headline",
         name: "headline",
         type: "text",
         required: true,
@@ -80,6 +81,7 @@ export const pageBlocks: Block[] = [
   makeBlock({
     fields: [
       {
+        defaultValue: "Logo cloud headline",
         name: "headline",
         type: "text",
         required: true,
@@ -153,6 +155,7 @@ export const pageBlocks: Block[] = [
   makeBlock({
     fields: [
       {
+        defaultValue: "Services headline",
         name: "headline",
         type: "text",
         required: true,
@@ -190,6 +193,7 @@ export const pageBlocks: Block[] = [
   makeBlock({
     fields: [
       {
+        defaultValue: "Statistics headline",
         name: "headline",
         type: "text",
         required: true,
@@ -234,6 +238,7 @@ export const pageBlocks: Block[] = [
   makeBlock({
     fields: [
       {
+        defaultValue: "Testimonials headline",
         name: "headline",
         type: "text",
         required: true,
@@ -280,6 +285,7 @@ export const pageBlocks: Block[] = [
   makeBlock({
     fields: [
       {
+        defaultValue: "Pricing headline",
         name: "headline",
         type: "text",
         required: true,
@@ -336,6 +342,7 @@ export const pageBlocks: Block[] = [
   makeBlock({
     fields: [
       {
+        defaultValue: "FAQ headline",
         name: "headline",
         type: "text",
         required: true,
@@ -390,6 +397,7 @@ export const pageBlocks: Block[] = [
         ],
       },
       {
+        defaultValue: "CTA headline",
         name: "headline",
         type: "text",
         required: true,
@@ -425,6 +433,7 @@ export const pageBlocks: Block[] = [
         fields: linkArrayFields,
       },
       {
+        defaultValue: "© 2026 Agency Website Platform. All rights reserved.",
         name: "copyright",
         type: "text",
         required: true,
@@ -444,6 +453,7 @@ export const pageBlocks: Block[] = [
   makeBlock({
     fields: [
       {
+        defaultValue: "Contact headline",
         name: "headline",
         type: "text",
         required: true,

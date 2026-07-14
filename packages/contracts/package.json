@@ -1,0 +1,28 @@
+{
+  "name": "@sharoz/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./platform": "./src/platform.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@agency/lib": "workspace:*",
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "@agency/eslint-config": "workspace:*",
+    "@agency/typescript-config": "workspace:*",
+    "@types/node": "^24.13.3",
+    "eslint": "^9.39.4",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

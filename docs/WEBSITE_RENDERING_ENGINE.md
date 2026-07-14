@@ -1,5 +1,7 @@
 # Website Rendering Engine
 
+> **V2 legacy notice:** This document describes the V1 `apps/web` Payload website renderer. In V2, `apps/web` is a frozen legacy renderer and must not be expanded as the V2 starter website. Custom public websites own presentation and communicate through Platform APIs and the future `@sharoz/sdk`. See [ADR-001](adr/ADR-001-V2-PLATFORM-ARCHITECTURE.md) and [V1 Legacy Boundaries](V1_LEGACY_BOUNDARIES.md).
+
 Milestone 7 adds `apps/web`, the reusable Next.js website template for future client websites. It renders tenant-scoped content from Payload CMS without implementing the visual page builder.
 
 ## Rendering Pipeline

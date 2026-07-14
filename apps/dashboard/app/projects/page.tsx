@@ -23,6 +23,7 @@ import {
   projectStatusLabels,
   projectStatuses,
 } from "@/lib/dashboard/projects";
+import { formatDashboardDate } from "@/lib/dashboard/dates";
 import { getDashboardSessionContext } from "@/lib/session";
 
 export default async function ProjectsPage({
@@ -163,7 +164,7 @@ export default async function ProjectsPage({
               </Badge>
               <span className="flex items-center gap-1 text-sm text-muted-foreground">
                 <CalendarClock className="size-4" />
-                {project.launchTargetAt?.toLocaleDateString() ?? "Not set"}
+                {formatDashboardDate(project.launchTargetAt)}
               </span>
               <span className="text-sm text-muted-foreground">
                 {project.websiteName ?? "Not connected"}

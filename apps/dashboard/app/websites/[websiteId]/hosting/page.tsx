@@ -1,15 +1,28 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, Input, Label } from "@agency/ui";
+import { redirect } from "next/navigation";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  EmptyState,
+  Input,
+  Label,
+} from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
+import { formatDashboardDateTime } from "@/lib/dashboard/dates";
 import {
   addWebsiteDomain,
   getWebsiteHosting,
   recordManualDeployment,
   setPrimaryDomain,
+  type DeploymentLifecycleStatus,
   upsertManualHostingConnection,
 } from "@/lib/deployment/services";
 import { getDashboardSessionContext } from "@/lib/session";
@@ -23,6 +36,16 @@ function configurationString(value: unknown) {
   return typeof value === "string" ? value : "";
 }
 
+function revalidateHostingPaths(websiteId: string) {
+  revalidatePath("/domains");
+  revalidatePath("/deployments");
+  revalidatePath("/websites");
+  revalidatePath(`/websites/${websiteId}`);
+  revalidatePath(`/websites/${websiteId}/domains`);
+  revalidatePath(`/websites/${websiteId}/hosting`);
+  revalidatePath(`/websites/${websiteId}/launch`);
+}
+
 export default async function WebsiteHostingPage({
   params,
 }: {
@@ -30,13 +53,19 @@ export default async function WebsiteHostingPage({
 }) {
   const context = await getDashboardSessionContext();
   if (!context) {
-    return <DashboardPage title="Hosting"><UnauthorizedState message="Sign in to manage hosting." /></DashboardPage>;
+    return (
+      <DashboardPage title="Hosting">
+        <UnauthorizedState message="Sign in to manage hosting." />
+      </DashboardPage>
+    );
   }
 
   const { websiteId } = await params;
   const request = createDashboardRequest(context);
   const hosting = await getWebsiteHosting({ database, request, websiteId });
-  const manualConnection = hosting.connections.find((connection) => connection.provider === "manual");
+  const manualConnection = hosting.connections.find(
+    (connection) => connection.provider === "manual",
+  );
 
   async function connectManual(formData: FormData) {
     "use server";
@@ -54,10 +83,8 @@ export default async function WebsiteHostingPage({
       request: createDashboardRequest(actionContext),
       websiteId,
     });
-    revalidatePath("/websites");
-    revalidatePath(`/websites/${websiteId}`);
-    revalidatePath(`/websites/${websiteId}/hosting`);
-    revalidatePath("/deployments");
+    revalidateHostingPaths(websiteId);
+    redirect(`/websites/${websiteId}/hosting`);
   }
 
   async function addDomain(formData: FormData) {
@@ -67,12 +94,12 @@ export default async function WebsiteHostingPage({
     await addWebsiteDomain({
       database,
       domain: formString(formData, "domain"),
+      environmentId: formString(formData, "environmentId"),
       request: createDashboardRequest(actionContext),
       websiteId,
     });
-    revalidatePath("/domains");
-    revalidatePath(`/websites/${websiteId}`);
-    revalidatePath(`/websites/${websiteId}/hosting`);
+    revalidateHostingPaths(websiteId);
+    redirect(`/websites/${websiteId}/hosting`);
   }
 
   async function makePrimary(formData: FormData) {
@@ -84,9 +111,8 @@ export default async function WebsiteHostingPage({
       domainId: formString(formData, "domainId"),
       request: createDashboardRequest(actionContext),
     });
-    revalidatePath("/domains");
-    revalidatePath(`/websites/${websiteId}`);
-    revalidatePath(`/websites/${websiteId}/hosting`);
+    revalidateHostingPaths(websiteId);
+    redirect(`/websites/${websiteId}/hosting`);
   }
 
   async function recordDeployment(formData: FormData) {
@@ -97,15 +123,16 @@ export default async function WebsiteHostingPage({
       database,
       input: {
         deploymentUrl: formString(formData, "deploymentUrl"),
+        environmentId: formString(formData, "environmentId"),
+        failureSummary: formString(formData, "failureSummary"),
         notes: formString(formData, "notes"),
-        status: formString(formData, "status") === "failed" ? "failed" : "ready",
+        status: formString(formData, "status") as DeploymentLifecycleStatus,
       },
       request: createDashboardRequest(actionContext),
       websiteId,
     });
-    revalidatePath("/deployments");
-    revalidatePath(`/websites/${websiteId}`);
-    revalidatePath(`/websites/${websiteId}/hosting`);
+    revalidateHostingPaths(websiteId);
+    redirect(`/websites/${websiteId}/hosting`);
   }
 
   return (
@@ -126,7 +153,17 @@ export default async function WebsiteHostingPage({
       title={`${hosting.website.name} Hosting`}
     >
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Info label="Deployment" value={hosting.website.deploymentStatus} tone={hosting.website.deploymentStatus === "ready" ? "success" : hosting.website.deploymentStatus === "failed" ? "error" : "outline"} />
+        <Info
+          label="Deployment"
+          value={hosting.website.deploymentStatus}
+          tone={
+            hosting.website.deploymentStatus === "ready"
+              ? "success"
+              : hosting.website.deploymentStatus === "failed"
+                ? "error"
+                : "outline"
+          }
+        />
         <Info label="Primary domain" value={hosting.website.primaryDomain ?? "Not set"} />
         <Info label="Production URL" value={hosting.website.productionUrl ?? "Not configured"} />
         <Info label="Connections" value={hosting.connections.length.toString()} />
@@ -141,19 +178,42 @@ export default async function WebsiteHostingPage({
             <form action={connectManual} className="grid gap-3 md:grid-cols-2">
               <div>
                 <Label htmlFor="hostingProviderName">Provider name</Label>
-                <Input defaultValue={configurationString(manualConnection?.configuration.hostingProviderName)} id="hostingProviderName" name="hostingProviderName" required />
+                <Input
+                  defaultValue={configurationString(
+                    manualConnection?.configuration.hostingProviderName,
+                  )}
+                  id="hostingProviderName"
+                  name="hostingProviderName"
+                  required
+                />
               </div>
               <div>
                 <Label htmlFor="deploymentMethod">Deployment method</Label>
-                <Input defaultValue={manualConnection?.deploymentMethod ?? "Manual upload"} id="deploymentMethod" name="deploymentMethod" required />
+                <Input
+                  defaultValue={manualConnection?.deploymentMethod ?? "Manual upload"}
+                  id="deploymentMethod"
+                  name="deploymentMethod"
+                  required
+                />
               </div>
               <div>
                 <Label htmlFor="productionUrl">Production URL</Label>
-                <Input defaultValue={manualConnection?.productionUrl ?? hosting.website.productionUrl ?? ""} id="productionUrl" name="productionUrl" required />
+                <Input
+                  defaultValue={
+                    manualConnection?.productionUrl ?? hosting.website.productionUrl ?? ""
+                  }
+                  id="productionUrl"
+                  name="productionUrl"
+                  required
+                />
               </div>
               <div>
                 <Label htmlFor="dashboardUrl">Provider dashboard URL</Label>
-                <Input defaultValue={manualConnection?.dashboardUrl ?? ""} id="dashboardUrl" name="dashboardUrl" />
+                <Input
+                  defaultValue={manualConnection?.dashboardUrl ?? ""}
+                  id="dashboardUrl"
+                  name="dashboardUrl"
+                />
               </div>
               <div className="md:col-span-2">
                 <Label htmlFor="notes">Notes</Label>
@@ -175,14 +235,42 @@ export default async function WebsiteHostingPage({
               <form action={recordDeployment} className="grid gap-3">
                 <div>
                   <Label htmlFor="deploymentUrl">Deployment URL</Label>
-                  <Input defaultValue={manualConnection.productionUrl ?? ""} id="deploymentUrl" name="deploymentUrl" />
+                  <Input
+                    defaultValue={manualConnection.productionUrl ?? ""}
+                    id="deploymentUrl"
+                    name="deploymentUrl"
+                  />
                 </div>
                 <div>
                   <Label htmlFor="status">Status</Label>
-                  <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" id="status" name="status">
-                    <option value="ready">Ready</option>
-                    <option value="failed">Failed</option>
+                  <select
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    id="status"
+                    name="status"
+                  >
+                    <option value="queued">Queued / planned</option>
+                    <option value="deploying">Starting now</option>
+                    <option value="ready">Record completed success</option>
+                    <option value="failed">Record completed failure</option>
                   </select>
+                </div>
+                <div>
+                  <Label htmlFor="deploymentEnvironmentId">Environment</Label>
+                  <select
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    id="deploymentEnvironmentId"
+                    name="environmentId"
+                  >
+                    {hosting.environments.map((environment) => (
+                      <option key={environment.id} value={environment.id}>
+                        {environment.name} ({environment.type})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="failureSummary">Failure reason</Label>
+                  <Input id="failureSummary" name="failureSummary" />
                 </div>
                 <div>
                   <Label htmlFor="deploymentNotes">Notes</Label>
@@ -191,7 +279,10 @@ export default async function WebsiteHostingPage({
                 <Button type="submit">Record Deployment</Button>
               </form>
             ) : (
-              <EmptyState description="Connect manual hosting before recording a deployment." title="No hosting connection" />
+              <EmptyState
+                description="Connect manual hosting before recording a deployment."
+                title="No hosting connection"
+              />
             )}
           </CardContent>
         </Card>
@@ -208,6 +299,20 @@ export default async function WebsiteHostingPage({
                 <Label htmlFor="domain">Domain</Label>
                 <Input id="domain" name="domain" placeholder="example.com" required />
               </div>
+              <div>
+                <Label htmlFor="domainEnvironmentId">Environment</Label>
+                <select
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  id="domainEnvironmentId"
+                  name="environmentId"
+                >
+                  {hosting.environments.map((environment) => (
+                    <option key={environment.id} value={environment.id}>
+                      {environment.name} ({environment.type})
+                    </option>
+                  ))}
+                </select>
+              </div>
               <Button type="submit">Add Domain</Button>
             </form>
           </CardContent>
@@ -223,20 +328,31 @@ export default async function WebsiteHostingPage({
             ) : (
               <div className="divide-y divide-border">
                 {hosting.domains.map((domain) => (
-                  <div className="grid gap-3 py-3 md:grid-cols-[1fr_auto_auto] md:items-center" key={domain.id}>
+                  <div
+                    className="grid gap-3 py-3 md:grid-cols-[1fr_auto_auto] md:items-center"
+                    key={domain.id}
+                  >
                     <div>
-                      <Link className="font-medium underline-offset-4 hover:underline" href={`/domains/${domain.id}`}>
+                      <Link
+                        className="font-medium underline-offset-4 hover:underline"
+                        href={`/domains/${domain.id}`}
+                      >
                         {domain.domain}
                       </Link>
                       <p className="text-xs text-muted-foreground">
-                        DNS {domain.dnsState} · SSL {domain.sslState} · {domain.verificationStatus}
+                        {domain.environment.name} · DNS {domain.dnsState} · SSL {domain.sslState} ·{" "}
+                        {domain.verificationStatus}
                       </p>
                     </div>
-                    <Badge variant={domain.isPrimary ? "success" : "outline"}>{domain.isPrimary ? "Primary" : "Secondary"}</Badge>
+                    <Badge variant={domain.isPrimary ? "success" : "outline"}>
+                      {domain.isPrimary ? "Primary" : "Secondary"}
+                    </Badge>
                     {!domain.isPrimary ? (
                       <form action={makePrimary}>
                         <input name="domainId" type="hidden" value={domain.id} />
-                        <Button size="sm" type="submit" variant="outline">Set Primary</Button>
+                        <Button size="sm" type="submit" variant="outline">
+                          Set Primary
+                        </Button>
                       </form>
                     ) : null}
                   </div>
@@ -257,13 +373,33 @@ export default async function WebsiteHostingPage({
           ) : (
             <div className="divide-y divide-border">
               {hosting.deployments.map((deployment) => (
-                <div className="grid gap-2 py-3 md:grid-cols-[0.7fr_0.7fr_1fr_0.9fr_auto] md:items-center" key={deployment.id}>
+                <div
+                  className="grid gap-2 py-3 md:grid-cols-[0.7fr_0.7fr_0.7fr_1fr_0.9fr_auto] md:items-center"
+                  key={deployment.id}
+                >
                   <Badge variant="outline">{deployment.provider}</Badge>
-                  <Badge variant={deployment.status === "ready" ? "success" : deployment.status === "failed" ? "error" : "warning"}>{deployment.status}</Badge>
-                  <span className="break-words text-sm text-muted-foreground">{deployment.deploymentUrl ?? "No URL"}</span>
-                  <span className="text-sm text-muted-foreground">{deployment.completedAt?.toLocaleString() ?? "In progress"}</span>
+                  <Badge variant="outline">{deployment.environment.name}</Badge>
+                  <Badge
+                    variant={
+                      deployment.status === "ready"
+                        ? "success"
+                        : deployment.status === "failed"
+                          ? "error"
+                          : "warning"
+                    }
+                  >
+                    {deployment.status}
+                  </Badge>
+                  <span className="break-words text-sm text-muted-foreground">
+                    {deployment.deploymentUrl ?? "No URL"}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    {formatDashboardDateTime(deployment.completedAt, "In progress")}
+                  </span>
                   <Button asChild size="sm" variant="outline">
-                    <Link href={`/deployments/${deployment.id}`}>Details</Link>
+                    <Link href={`/websites/${websiteId}/deployments/${deployment.id}`}>
+                      Details
+                    </Link>
                   </Button>
                 </div>
               ))}

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createOrganization } from "@agency/auth/organizations";
 import { database } from "@/lib/auth";
+import { toSafeErrorMessage } from "@/lib/errors";
 import { requireDashboardSessionContext } from "@/lib/session";
 
 function value(formData: FormData, key: string): string | undefined {
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Workspace could not be created.";
+    const message = toSafeErrorMessage(error, "Workspace could not be created.");
     redirect(`${returnTo}?error=${encodeURIComponent(message)}`);
   }
 

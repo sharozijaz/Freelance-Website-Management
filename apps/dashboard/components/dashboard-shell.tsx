@@ -109,9 +109,8 @@ export function DashboardShell({
 
   const page = getPageContext(pathname);
   const returnTo = pathname || "/";
-  const activeMembership =
-    activeOrganization
-      ? context.memberships.find(
+  const activeMembership = activeOrganization
+    ? context.memberships.find(
         (membership) =>
           membership.organizationId === activeOrganization.id && membership.status === "active",
       )
@@ -252,7 +251,9 @@ export function DashboardShell({
               </div>
             </div>
             <div>
-              <p className="sr-only">Active workspace: {activeOrganization?.name ?? "Agency Overview"}</p>
+              <p className="sr-only">
+                Active workspace: {activeOrganization?.name ?? "Agency Overview"}
+              </p>
             </div>
           </div>
         </header>

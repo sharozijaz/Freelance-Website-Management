@@ -7,12 +7,7 @@ interface UnauthorizedStateProps {
 export function UnauthorizedState({
   message = "You do not have access to this screen.",
 }: UnauthorizedStateProps) {
-  return (
-    <EmptyState
-      description={message}
-      title="Unauthorized"
-    />
-  );
+  return <EmptyState description={message} title="Unauthorized" />;
 }
 
 export function NoActiveOrganizationState() {

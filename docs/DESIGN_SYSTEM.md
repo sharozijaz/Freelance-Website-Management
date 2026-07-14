@@ -1,5 +1,7 @@
 # Agency Website Platform Design System
 
+> **V2 boundary notice:** This design system remains useful for dashboard, admin, and internal platform UI. V2 public websites must not be required to use `@agency/ui` or the dashboard design system; custom website presentation stays local to each website. See [ADR-001](adr/ADR-001-V2-PLATFORM-ARCHITECTURE.md) and [V2 Architecture Guardrails](V2_ARCHITECTURE_GUARDRAILS.md).
+
 ## Purpose
 
 The design system is the shared visual and interaction foundation for the dashboard, CMS, and all future client websites. It keeps the platform consistent while allowing each tenant website to express its own brand through controlled theme overrides.

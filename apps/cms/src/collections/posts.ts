@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { contentAccess } from "../access";
+import { publishedPostAccess } from "../access";
 import {
   authorField,
   featuredImageField,
@@ -12,7 +12,7 @@ import {
 
 export const Posts: CollectionConfig = {
   slug: "posts",
-  access: contentAccess,
+  access: publishedPostAccess,
   admin: {
     defaultColumns: ["title", "slug", "_status", "organizationId", "publishDate"],
     useAsTitle: "title",

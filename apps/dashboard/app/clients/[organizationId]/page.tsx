@@ -6,6 +6,7 @@ import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
+import { formatDashboardDate, formatDashboardDateTime } from "@/lib/dashboard/dates";
 import { getClientWorkspaceOverview } from "@/lib/dashboard/queries";
 import { getDashboardSessionContext } from "@/lib/session";
 
@@ -16,7 +17,11 @@ export default async function ClientWorkspacePage({
 }) {
   const context = await getDashboardSessionContext();
   if (!context) {
-    return <DashboardPage title="Client Workspace"><UnauthorizedState message="Sign in to view this workspace." /></DashboardPage>;
+    return (
+      <DashboardPage title="Client Workspace">
+        <UnauthorizedState message="Sign in to view this workspace." />
+      </DashboardPage>
+    );
   }
 
   const { organizationId } = await params;
@@ -24,15 +29,23 @@ export default async function ClientWorkspacePage({
   const overview = await getClientWorkspaceOverview({ database, organizationId, request });
 
   if (!overview) {
-    return <DashboardPage title="Client Workspace"><EmptyState title="Client workspace not found" /></DashboardPage>;
+    return (
+      <DashboardPage title="Client Workspace">
+        <EmptyState title="Client workspace not found" />
+      </DashboardPage>
+    );
   }
 
   return (
     <DashboardPage
       actions={
         <>
-          <Button asChild size="sm" variant="outline"><Link href="/content">Open CMS gateway</Link></Button>
-          <Button asChild size="sm" variant="outline"><Link href="/team">Invite member</Link></Button>
+          <Button asChild size="sm" variant="outline">
+            <Link href="/content">Open CMS gateway</Link>
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link href="/team">Invite member</Link>
+          </Button>
         </>
       }
       description="Client-specific operations, scoped to this organization."
@@ -55,7 +68,11 @@ export default async function ClientWorkspacePage({
         </Panel>
 
         <Panel icon={<ListChecks className="size-4" />} title="Projects">
-          <Row href={`/projects?organizationId=${organizationId}`} meta="Delivery workflows" title="View client projects" />
+          <Row
+            href={`/projects?organizationId=${organizationId}`}
+            meta="Delivery workflows"
+            title="View client projects"
+          />
           <Row href="/projects" meta="Create or manage project" title="Project operations" />
         </Panel>
 
@@ -99,7 +116,7 @@ export default async function ClientWorkspacePage({
                 <div>
                   <p className="text-sm font-medium">{invitation.email}</p>
                   <p className="text-xs text-muted-foreground">
-                    Expires {invitation.expiresAt.toLocaleDateString()}
+                    Expires {formatDashboardDate(invitation.expiresAt)}
                   </p>
                 </div>
                 <Badge variant="warning">{invitation.role}</Badge>
@@ -134,7 +151,9 @@ export default async function ClientWorkspacePage({
             overview.recentActivity.map((activity) => (
               <div className="py-3" key={activity.id}>
                 <p className="text-sm font-medium">{activity.description}</p>
-                <p className="text-xs text-muted-foreground">{activity.occurredAt.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatDashboardDateTime(activity.occurredAt)}
+                </p>
               </div>
             ))
           )}
@@ -144,11 +163,22 @@ export default async function ClientWorkspacePage({
   );
 }
 
-function Panel({ children, icon, title }: { children: ReactNode; icon?: ReactNode; title: string }) {
+function Panel({
+  children,
+  icon,
+  title,
+}: {
+  children: ReactNode;
+  icon?: ReactNode;
+  title: string;
+}) {
   return (
     <Card>
       <CardHeader className="p-4">
-        <CardTitle className="flex items-center gap-2 text-base">{icon}{title}</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-base">
+          {icon}
+          {title}
+        </CardTitle>
       </CardHeader>
       <CardContent className="divide-y divide-border p-4 pt-0">{children}</CardContent>
     </Card>
@@ -158,7 +188,10 @@ function Panel({ children, icon, title }: { children: ReactNode; icon?: ReactNod
 function Row({ href, meta, title }: { href: string; meta: string; title: string }) {
   return (
     <Link className="flex items-center justify-between py-3 text-sm hover:text-primary" href={href}>
-      <span><span className="font-medium">{title}</span><span className="block text-xs text-muted-foreground">{meta}</span></span>
+      <span>
+        <span className="font-medium">{title}</span>
+        <span className="block text-xs text-muted-foreground">{meta}</span>
+      </span>
       <ExternalLink className="size-4 text-muted-foreground" />
     </Link>
   );

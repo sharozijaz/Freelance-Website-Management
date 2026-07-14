@@ -21,6 +21,7 @@ import {
 import type { DashboardRequest } from "./types";
 import { getPagination } from "./filters";
 import { presentAuditLog } from "./activity";
+import { compareDashboardDatesDesc } from "./dates";
 import {
   getContentAttentionItems,
   getInvitationAttentionItems,
@@ -47,7 +48,8 @@ function organizationScopeCondition(request: DashboardRequest, column = organiza
 }
 
 function activeOrganizationCondition(request: DashboardRequest, organizationId?: string) {
-  const requestedOrganizationId = organizationId ?? request.access.activeOrganizationId ?? undefined;
+  const requestedOrganizationId =
+    organizationId ?? request.access.activeOrganizationId ?? undefined;
   const scope = getScopedOrganizationIds(request);
 
   if (requestedOrganizationId) {
@@ -117,30 +119,46 @@ export async function getAgencyOverview({
     scopedOrgIds ? inArray(projects.organizationId, scopedOrgIds) : undefined,
   ].filter(Boolean);
 
-  const [[clientCount], [websiteCount], [projectCount], [draftPages], [draftPosts], [pendingInvitations]] =
-    await Promise.all([
-      database
-        .select({ value: count() })
-        .from(organizations)
-        .where(and(...orgConditions, eq(organizations.status, "active"))),
-      database.select({ value: count() }).from(websites).where(and(...websiteConditions)),
-      database.select({ value: count() }).from(projects).where(and(...projectConditions)),
-      database
-        .select({ value: count() })
-        .from(pages)
-        .where(and(...pageConditions, eq(pages.status, "draft"))),
-      database
-        .select({ value: count() })
-        .from(posts)
-        .where(and(...postConditions, eq(posts.status, "draft"))),
-      database
-        .select({ value: count() })
-        .from(invitations)
-        .where(and(...invitationConditions, eq(invitations.status, "pending"))),
-    ]);
+  const [
+    [clientCount],
+    [websiteCount],
+    [projectCount],
+    [draftPages],
+    [draftPosts],
+    [pendingInvitations],
+  ] = await Promise.all([
+    database
+      .select({ value: count() })
+      .from(organizations)
+      .where(and(...orgConditions, eq(organizations.status, "active"))),
+    database
+      .select({ value: count() })
+      .from(websites)
+      .where(and(...websiteConditions)),
+    database
+      .select({ value: count() })
+      .from(projects)
+      .where(and(...projectConditions)),
+    database
+      .select({ value: count() })
+      .from(pages)
+      .where(and(...pageConditions, eq(pages.status, "draft"))),
+    database
+      .select({ value: count() })
+      .from(posts)
+      .where(and(...postConditions, eq(posts.status, "draft"))),
+    database
+      .select({ value: count() })
+      .from(invitations)
+      .where(and(...invitationConditions, eq(invitations.status, "pending"))),
+  ]);
 
   const [recentWebsites, recentActivity, attention] = await Promise.all([
-    getWebsites({ database, request, params: { page: 1, query: "", sort: "updated_desc", status: "all" } }),
+    getWebsites({
+      database,
+      request,
+      params: { page: 1, query: "", sort: "updated_desc", status: "all" },
+    }),
     getRecentActivity({ database, request, limit: 8 }),
     getAttentionItems({ database, request }),
   ]);
@@ -343,6 +361,7 @@ export async function getWebsites({
       productionUrl: websites.productionUrl,
       status: websites.status,
       updatedAt: websites.updatedAt,
+      websiteType: websites.websiteType,
     })
     .from(websites)
     .innerJoin(organizations, eq(websites.organizationId, organizations.id))
@@ -367,12 +386,17 @@ export async function getContentOperations({
   assertDashboardPermission(request, "cms:read", params.organizationId);
   const scopedOrgIds = getScopedOrganizationIds(request);
   const requestedOrganizationId = params.organizationId ?? request.access.activeOrganizationId;
-  if (requestedOrganizationId && scopedOrgIds !== null && !scopedOrgIds.includes(requestedOrganizationId)) {
+  if (
+    requestedOrganizationId &&
+    scopedOrgIds !== null &&
+    !scopedOrgIds.includes(requestedOrganizationId)
+  ) {
     return { draftCount: 0, items: [], page: params.page, publishedCount: 0, scheduledCount: 0 };
   }
 
   const organizationIds =
-    requestedOrganizationId && (scopedOrgIds === null || scopedOrgIds.includes(requestedOrganizationId))
+    requestedOrganizationId &&
+    (scopedOrgIds === null || scopedOrgIds.includes(requestedOrganizationId))
       ? [requestedOrganizationId]
       : scopedOrgIds;
 
@@ -427,7 +451,7 @@ export async function getContentOperations({
   ]);
 
   const items = [...pageRows, ...postRows]
-    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+    .sort((a, b) => compareDashboardDatesDesc(a.updatedAt, b.updatedAt))
     .slice(0, 20);
 
   return {
@@ -457,7 +481,10 @@ export async function getTeamOperations({
 
   const [members, pendingInvitations] = await Promise.all([
     database.query.memberships.findMany({
-      where: and(eq(memberships.organizationId, activeOrganizationId), isNull(memberships.deletedAt)),
+      where: and(
+        eq(memberships.organizationId, activeOrganizationId),
+        isNull(memberships.deletedAt),
+      ),
       with: { user: true },
       orderBy: (table, { asc: sortAsc }) => [sortAsc(table.createdAt)],
     }),
@@ -530,105 +557,113 @@ export async function getAttentionItems({
   }
 
   const orgCondition = organizationIds ? inArray(organizations.id, organizationIds) : undefined;
-  const websiteCondition = organizationIds ? inArray(websites.organizationId, organizationIds) : undefined;
+  const websiteCondition = organizationIds
+    ? inArray(websites.organizationId, organizationIds)
+    : undefined;
   const invitationCondition = organizationIds
     ? inArray(invitations.organizationId, organizationIds)
     : undefined;
-  const pageCondition = organizationIds ? inArray(pages.organizationId, organizationIds) : undefined;
-  const postCondition = organizationIds ? inArray(posts.organizationId, organizationIds) : undefined;
+  const pageCondition = organizationIds
+    ? inArray(pages.organizationId, organizationIds)
+    : undefined;
+  const postCondition = organizationIds
+    ? inArray(posts.organizationId, organizationIds)
+    : undefined;
 
-  const [orgRows, websiteRows, invitationRows, pageRows, postRows, projectRows, mediaRows] = await Promise.all([
-    database
-      .select({
-        id: organizations.id,
-        name: organizations.name,
-        status: organizations.status,
-        updatedAt: organizations.updatedAt,
-      })
-      .from(organizations)
-      .where(and(isNull(organizations.deletedAt), orgCondition)),
-    database
-      .select({
-        deploymentStatus: websites.deploymentStatus,
-        id: websites.id,
-        name: websites.name,
-        organizationId: websites.organizationId,
-        primaryDomain: websites.primaryDomain,
-        projectId: projects.id,
-        status: websites.status,
-        updatedAt: websites.updatedAt,
-      })
-      .from(websites)
-      .leftJoin(projects, eq(projects.websiteId, websites.id))
-      .where(and(isNull(websites.deletedAt), websiteCondition)),
-    database
-      .select({
-        email: invitations.email,
-        expiresAt: invitations.expiresAt,
-        id: invitations.id,
-        organizationId: invitations.organizationId,
-        status: invitations.status,
-      })
-      .from(invitations)
-      .where(and(isNull(invitations.deletedAt), invitationCondition)),
-    database
-      .select({
-        id: pages.id,
-        organizationId: pages.organizationId,
-        status: pages.status,
-        title: pages.title,
-        type: sql<"page">`'page'`,
-        updatedAt: pages.updatedAt,
-      })
-      .from(pages)
-      .where(and(isNull(pages.deletedAt), pageCondition, eq(pages.status, "draft"))),
-    database
-      .select({
-        id: posts.id,
-        organizationId: posts.organizationId,
-        status: posts.status,
-        title: posts.title,
-        type: sql<"post">`'post'`,
-        updatedAt: posts.updatedAt,
-      })
-      .from(posts)
-      .where(and(isNull(posts.deletedAt), postCondition, eq(posts.status, "draft"))),
-    database
-      .select({
-        figmaUrl: projects.figmaUrl,
-        id: projects.id,
-        launchTargetAt: projects.launchTargetAt,
-        metadata: projects.metadata,
-        name: projects.name,
-        organizationId: projects.organizationId,
-        status: projects.status,
-        updatedAt: projects.updatedAt,
-      })
-      .from(projects)
-      .where(
-        and(
-          isNull(projects.deletedAt),
-          organizationIds ? inArray(projects.organizationId, organizationIds) : undefined,
+  const [orgRows, websiteRows, invitationRows, pageRows, postRows, projectRows, mediaRows] =
+    await Promise.all([
+      database
+        .select({
+          id: organizations.id,
+          name: organizations.name,
+          status: organizations.status,
+          updatedAt: organizations.updatedAt,
+        })
+        .from(organizations)
+        .where(and(isNull(organizations.deletedAt), orgCondition)),
+      database
+        .select({
+          deploymentStatus: websites.deploymentStatus,
+          id: websites.id,
+          name: websites.name,
+          organizationId: websites.organizationId,
+          primaryDomain: websites.primaryDomain,
+          projectId: projects.id,
+          status: websites.status,
+          updatedAt: websites.updatedAt,
+          websiteType: websites.websiteType,
+        })
+        .from(websites)
+        .leftJoin(projects, eq(projects.websiteId, websites.id))
+        .where(and(isNull(websites.deletedAt), websiteCondition)),
+      database
+        .select({
+          email: invitations.email,
+          expiresAt: invitations.expiresAt,
+          id: invitations.id,
+          organizationId: invitations.organizationId,
+          status: invitations.status,
+        })
+        .from(invitations)
+        .where(and(isNull(invitations.deletedAt), invitationCondition)),
+      database
+        .select({
+          id: pages.id,
+          organizationId: pages.organizationId,
+          status: pages.status,
+          title: pages.title,
+          type: sql<"page">`'page'`,
+          updatedAt: pages.updatedAt,
+        })
+        .from(pages)
+        .where(and(isNull(pages.deletedAt), pageCondition, eq(pages.status, "draft"))),
+      database
+        .select({
+          id: posts.id,
+          organizationId: posts.organizationId,
+          status: posts.status,
+          title: posts.title,
+          type: sql<"post">`'post'`,
+          updatedAt: posts.updatedAt,
+        })
+        .from(posts)
+        .where(and(isNull(posts.deletedAt), postCondition, eq(posts.status, "draft"))),
+      database
+        .select({
+          figmaUrl: projects.figmaUrl,
+          id: projects.id,
+          launchTargetAt: projects.launchTargetAt,
+          metadata: projects.metadata,
+          name: projects.name,
+          organizationId: projects.organizationId,
+          status: projects.status,
+          updatedAt: projects.updatedAt,
+        })
+        .from(projects)
+        .where(
+          and(
+            isNull(projects.deletedAt),
+            organizationIds ? inArray(projects.organizationId, organizationIds) : undefined,
+          ),
         ),
-      ),
-    database
-      .select({
-        altText: mediaAssets.altText,
-        filename: mediaAssets.filename,
-        id: mediaAssets.id,
-        metadata: mediaAssets.metadata,
-        mimeType: mediaAssets.mimeType,
-        organizationId: mediaAssets.organizationId,
-        websiteId: mediaAssets.websiteId,
-      })
-      .from(mediaAssets)
-      .where(
-        and(
-          isNull(mediaAssets.deletedAt),
-          organizationIds ? inArray(mediaAssets.organizationId, organizationIds) : undefined,
+      database
+        .select({
+          altText: mediaAssets.altText,
+          filename: mediaAssets.filename,
+          id: mediaAssets.id,
+          metadata: mediaAssets.metadata,
+          mimeType: mediaAssets.mimeType,
+          organizationId: mediaAssets.organizationId,
+          websiteId: mediaAssets.websiteId,
+        })
+        .from(mediaAssets)
+        .where(
+          and(
+            isNull(mediaAssets.deletedAt),
+            organizationIds ? inArray(mediaAssets.organizationId, organizationIds) : undefined,
+          ),
         ),
-      ),
-  ]);
+    ]);
 
   return [
     ...getOrganizationAttentionItems(orgRows),

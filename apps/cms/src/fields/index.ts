@@ -1,12 +1,23 @@
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import type { Field } from "payload";
 
+export function getDefaultOrganizationId(): string | undefined {
+  return process.env.CMS_DEFAULT_ORGANIZATION_ID ?? process.env.WEB_ORGANIZATION_ID;
+}
+
+export function getDefaultWebsiteId(): string | undefined {
+  return process.env.CMS_DEFAULT_WEBSITE_ID ?? process.env.WEB_WEBSITE_ID;
+}
+
 export const organizationField: Field = {
+  defaultValue: getDefaultOrganizationId,
   name: "organizationId",
   type: "text",
   admin: {
-    description: "Existing platform organization UUID. Used for tenant isolation.",
+    description:
+      "Auto-filled from CMS_DEFAULT_ORGANIZATION_ID or WEB_ORGANIZATION_ID for local editing.",
     position: "sidebar",
+    readOnly: Boolean(getDefaultOrganizationId()),
   },
   index: true,
   required: true,

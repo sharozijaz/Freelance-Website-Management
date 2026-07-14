@@ -2,8 +2,19 @@ import { draftMode } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifyPreviewToken } from "@agency/lib/preview";
 import { previewSecret } from "@/lib/config";
+import { checkRateLimit, getRequestIp } from "@/lib/rate-limit";
 
 export async function GET(request: Request) {
+  if (
+    !checkRateLimit({
+      key: `preview:${getRequestIp(request)}`,
+      limit: 30,
+      windowMs: 60_000,
+    })
+  ) {
+    return new Response("Too many preview requests", { status: 429 });
+  }
+
   const url = new URL(request.url);
   const token = url.searchParams.get("token");
 

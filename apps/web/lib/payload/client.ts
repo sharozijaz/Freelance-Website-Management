@@ -53,8 +53,17 @@ export async function findPayloadDocs<T>({
   tags = [],
   where,
 }: PayloadFindOptions): Promise<PayloadListResponse<T>> {
-  const preview = await draftMode();
-  const shouldUseDraft = draft ?? preview.isEnabled;
+  let shouldUseDraft = draft ?? false;
+
+  if (draft === undefined) {
+    try {
+      const preview = await draftMode();
+      shouldUseDraft = preview.isEnabled;
+    } catch (error) {
+      void error;
+      shouldUseDraft = false;
+    }
+  }
   const params = new URLSearchParams({
     depth: depth.toString(),
     draft: shouldUseDraft ? "true" : "false",

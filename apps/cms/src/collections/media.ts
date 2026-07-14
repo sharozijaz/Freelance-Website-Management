@@ -30,10 +30,30 @@ export const Media: CollectionConfig = {
     },
     {
       name: "focalPoint",
-      type: "point",
+      type: "group",
       admin: {
         description: "Image focal point used by future responsive rendering.",
       },
+      fields: [
+        {
+          name: "x",
+          type: "number",
+          admin: {
+            description: "Horizontal focal position from 0 to 100.",
+          },
+          max: 100,
+          min: 0,
+        },
+        {
+          name: "y",
+          type: "number",
+          admin: {
+            description: "Vertical focal position from 0 to 100.",
+          },
+          max: 100,
+          min: 0,
+        },
+      ],
     },
     {
       name: "metadata",
@@ -46,7 +66,7 @@ export const Media: CollectionConfig = {
   timestamps: true,
   upload: {
     adminThumbnail: "thumbnail",
-    focalPoint: true,
+    focalPoint: false,
     imageSizes: [
       {
         name: "thumbnail",

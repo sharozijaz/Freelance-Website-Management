@@ -1,5 +1,6 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { verifyPreviewToken } from "@agency/lib/preview";
+import { checkRateLimit, getRequestIp } from "@/lib/rate-limit";
 
 interface RevalidationPayload {
   organizationId?: string;
@@ -13,6 +14,16 @@ function isRevalidationPayload(value: unknown): value is RevalidationPayload {
 }
 
 export async function POST(request: Request) {
+  if (
+    !checkRateLimit({
+      key: `revalidate:${getRequestIp(request)}`,
+      limit: 60,
+      windowMs: 60_000,
+    })
+  ) {
+    return Response.json({ error: "Too many revalidation requests" }, { status: 429 });
+  }
+
   const body: unknown = await request.json().catch(() => null);
 
   if (!isRevalidationPayload(body) || !body.token || !body.path || !body.organizationId) {

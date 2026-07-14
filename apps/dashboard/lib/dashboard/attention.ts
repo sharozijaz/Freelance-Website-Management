@@ -1,5 +1,6 @@
 import type { AttentionItem } from "./types";
 import type { SeoFinding } from "@agency/lib/seo";
+import { toDashboardDate } from "./dates";
 
 const oneDayMs = 24 * 60 * 60 * 1000;
 
@@ -15,9 +16,12 @@ export function getInvitationAttentionItems(
 ): AttentionItem[] {
   return invitations
     .filter((invitation) => invitation.status === "pending")
-    .filter((invitation) => invitation.expiresAt.getTime() - now.getTime() <= 2 * oneDayMs)
+    .filter((invitation) => {
+      const expiresAt = toDashboardDate(invitation.expiresAt);
+      return Boolean(expiresAt && expiresAt.getTime() - now.getTime() <= 2 * oneDayMs);
+    })
     .map((invitation) => ({
-      createdAt: invitation.expiresAt,
+      createdAt: toDashboardDate(invitation.expiresAt) ?? now,
       description: `${invitation.email} has an invitation expiring soon.`,
       id: `invitation-${invitation.id}`,
       organizationId: invitation.organizationId,
@@ -113,15 +117,21 @@ export function getProjectAttentionItems(
 ): AttentionItem[] {
   return projects.flatMap((project) => {
     const items: AttentionItem[] = [];
-    const launchTime = project.launchTargetAt?.getTime();
+    const launchDate = toDashboardDate(project.launchTargetAt);
+    const updatedAt = toDashboardDate(project.updatedAt) ?? now;
+    const launchTime = launchDate?.getTime();
     const statusChangedValue = project.metadata.statusChangedAt;
     const statusChangedAt =
-      typeof statusChangedValue === "string" ? new Date(statusChangedValue) : project.updatedAt;
+      toDashboardDate(statusChangedValue as string | null | undefined) ?? updatedAt;
 
-    if (launchTime && launchTime < now.getTime() && !["live", "completed", "cancelled"].includes(project.status)) {
+    if (
+      launchTime &&
+      launchTime < now.getTime() &&
+      !["live", "completed", "cancelled"].includes(project.status)
+    ) {
       items.push({
         actionHref: `/projects/${project.id}`,
-        createdAt: project.launchTargetAt ?? project.updatedAt,
+        createdAt: launchDate ?? updatedAt,
         description: `${project.name} passed its target launch date.`,
         id: `project-overdue-${project.id}`,
         organizationId: project.organizationId,
@@ -136,7 +146,7 @@ export function getProjectAttentionItems(
     ) {
       items.push({
         actionHref: `/projects/${project.id}`,
-        createdAt: project.launchTargetAt ?? project.updatedAt,
+        createdAt: launchDate ?? updatedAt,
         description: `${project.name} is approaching its target launch date.`,
         id: `project-approaching-${project.id}`,
         organizationId: project.organizationId,
@@ -149,7 +159,7 @@ export function getProjectAttentionItems(
     if (project.status === "design" && !project.figmaUrl) {
       items.push({
         actionHref: `/projects/${project.id}`,
-        createdAt: project.updatedAt,
+        createdAt: updatedAt,
         description: `${project.name} is in design without a Figma URL.`,
         id: `project-figma-${project.id}`,
         organizationId: project.organizationId,
@@ -303,7 +313,9 @@ export function getSeoAttentionItems(
   return findings
     .filter((finding) => finding.severity === "error")
     .filter((finding) =>
-      ["invalid_canonical_url", "missing_canonical_url", "published_noindex"].includes(finding.ruleId),
+      ["invalid_canonical_url", "missing_canonical_url", "published_noindex"].includes(
+        finding.ruleId,
+      ),
     )
     .map((finding) => ({
       actionHref: "/seo",

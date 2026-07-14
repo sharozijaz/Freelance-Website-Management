@@ -3,6 +3,7 @@ import { and, asc, eq, isNull } from "drizzle-orm";
 import { auditLogs, formFields, forms, formSubmissions } from "@agency/database/schema";
 import { database } from "@/lib/database";
 import { normalizeSubmissionData, validateSafeRedirect } from "@/features/forms";
+import { checkRateLimit, getRequestIp } from "@/lib/rate-limit";
 
 const maxSubmissionBytes = 64 * 1024;
 
@@ -16,15 +17,26 @@ function toPayload(formData: FormData) {
     }
 
     const currentValue = payload[key];
-    payload[key] = Array.isArray(currentValue)
-      ? currentValue.concat(value)
-      : [currentValue, value];
+    payload[key] = Array.isArray(currentValue) ? currentValue.concat(value) : [currentValue, value];
   }
 
   return payload;
 }
 
 export async function POST(request: Request) {
+  if (
+    !checkRateLimit({
+      key: `form:${getRequestIp(request)}`,
+      limit: 10,
+      windowMs: 60_000,
+    })
+  ) {
+    return NextResponse.json(
+      { error: "Too many submissions. Please try again later." },
+      { status: 429 },
+    );
+  }
+
   const contentLength = Number(request.headers.get("content-length") ?? "0");
   if (contentLength > maxSubmissionBytes) {
     return NextResponse.json({ error: "Submission is too large." }, { status: 413 });

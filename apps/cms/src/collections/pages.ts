@@ -1,8 +1,9 @@
 import type { CollectionConfig } from "payload";
-import { contentAccess } from "../access";
+import { publishedPageAccess } from "../access";
 import {
   authorField,
   featuredImageField,
+  getDefaultWebsiteId,
   organizationField,
   publishFields,
   seoField,
@@ -13,7 +14,7 @@ import { preparePageForSave, revalidatePageAfterChange } from "../hooks/pages";
 
 export const Pages: CollectionConfig = {
   slug: "pages",
-  access: contentAccess,
+  access: publishedPageAccess,
   admin: {
     defaultColumns: ["title", "slug", "_status", "organizationId", "websiteId", "publishDate"],
     useAsTitle: "title",
@@ -21,12 +22,13 @@ export const Pages: CollectionConfig = {
   fields: [
     organizationField,
     {
+      defaultValue: getDefaultWebsiteId,
       name: "websiteId",
       type: "text",
       admin: {
-        description:
-          "Optional website UUID. Used to narrow page resolution inside an organization.",
+        description: "Auto-filled from CMS_DEFAULT_WEBSITE_ID or WEB_WEBSITE_ID for local editing.",
         position: "sidebar",
+        readOnly: Boolean(getDefaultWebsiteId()),
       },
       index: true,
     },

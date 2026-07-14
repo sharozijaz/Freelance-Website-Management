@@ -1,0 +1,1 @@
+ALTER TABLE "websites" ADD COLUMN "launched_at" timestamp with time zone;

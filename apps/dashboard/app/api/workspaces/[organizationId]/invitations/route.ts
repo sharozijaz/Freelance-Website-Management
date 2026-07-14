@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createInvitation, membershipRoles } from "@agency/auth/organizations";
 import type { MembershipRole } from "@agency/auth";
 import { database } from "@/lib/auth";
+import { toSafeErrorMessage } from "@/lib/errors";
 import { requireDashboardSessionContext } from "@/lib/session";
 
 function parseRole(value: FormDataEntryValue | null): MembershipRole {
@@ -47,7 +48,7 @@ export async function POST(
 
     invitedUrl = result.url;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Invitation could not be created.";
+    const message = toSafeErrorMessage(error, "Invitation could not be created.");
     redirect(`${returnTo}?error=${encodeURIComponent(message)}`);
   }
 

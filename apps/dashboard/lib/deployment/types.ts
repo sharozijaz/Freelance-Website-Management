@@ -21,13 +21,7 @@ export const deploymentCapabilities = [
 
 export type DeploymentCapability = (typeof deploymentCapabilities)[number];
 export type NormalizedDeploymentStatus =
-  | "pending"
-  | "queued"
-  | "building"
-  | "ready"
-  | "failed"
-  | "cancelled"
-  | "unknown";
+  "pending" | "queued" | "building" | "ready" | "failed" | "cancelled" | "unknown";
 
 export type DeploymentEnvironment = "development" | "preview" | "production" | "staging";
 
@@ -77,7 +71,10 @@ export interface DeploymentProviderAdapter {
   listDomains?: (input: {
     connection: ProviderConnectionContext;
   }) => Promise<{ hostname: string; verified: boolean }[]>;
-  removeDomain?: (input: { connection: ProviderConnectionContext; hostname: string }) => Promise<void>;
+  removeDomain?: (input: {
+    connection: ProviderConnectionContext;
+    hostname: string;
+  }) => Promise<void>;
   triggerDeployment?: (input: {
     connection: ProviderConnectionContext;
   }) => Promise<NormalizedProviderDeployment>;
@@ -85,10 +82,10 @@ export interface DeploymentProviderAdapter {
     message?: string;
     ok: boolean;
   }>;
-  verifyDomain?: (input: {
-    connection: ProviderConnectionContext;
-    hostname: string;
-  }) => Promise<{ requiredRecords?: DnsInstruction[]; status: "failed" | "pending" | "unknown" | "verified" }>;
+  verifyDomain?: (input: { connection: ProviderConnectionContext; hostname: string }) => Promise<{
+    requiredRecords?: DnsInstruction[];
+    status: "failed" | "pending" | "unknown" | "verified";
+  }>;
 }
 
 export interface DeploymentProviderDefinition {

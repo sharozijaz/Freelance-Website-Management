@@ -1,5 +1,7 @@
 # Agency UI Component Library
 
+> **V2 boundary notice:** `@agency/ui` is a shared internal platform component library. V2 public websites may use their own component systems and must not be forced to depend on `@agency/ui`. See [ADR-001](adr/ADR-001-V2-PLATFORM-ARCHITECTURE.md) and [V2 Architecture Guardrails](V2_ARCHITECTURE_GUARDRAILS.md).
+
 ## Purpose
 
 The component library in `packages/ui` is the shared interface layer for the dashboard, CMS, website template, and future client portal. It provides reusable, accessible, theme-aware components that do not contain business logic.

@@ -37,13 +37,19 @@ export function ContactSection({ block }: BlockComponentProps<ContactContent>) {
           />
           <div className="space-y-3 text-sm">
             {content.email ? (
-              <a className="flex items-center gap-2 text-muted-foreground hover:text-foreground" href={`mailto:${content.email}`}>
+              <a
+                className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                href={`mailto:${content.email}`}
+              >
                 <Mail className="size-4" />
                 {content.email}
               </a>
             ) : null}
             {content.phone ? (
-              <a className="flex items-center gap-2 text-muted-foreground hover:text-foreground" href={`tel:${content.phone}`}>
+              <a
+                className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                href={`tel:${content.phone}`}
+              >
                 <Phone className="size-4" />
                 {content.phone}
               </a>

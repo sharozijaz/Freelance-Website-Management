@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createWebsite } from "@/lib/dashboard/projects";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
+import { toSafeErrorMessage } from "@/lib/errors";
 import { requireDashboardSessionContext } from "@/lib/session";
 
 function stringValue(formData: FormData, key: string): string | null {
@@ -37,13 +38,14 @@ export async function POST(request: Request) {
           favicon: stringValue(formData, "favicon"),
           logo: stringValue(formData, "logo"),
         },
+        websiteType: stringValue(formData, "websiteType") ?? "external_legacy",
       },
       request: dashboardRequest,
     });
 
     returnTo = `/websites/${website.id}`;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Website could not be created.";
+    const message = toSafeErrorMessage(error, "Website could not be created.");
     redirect(`${returnTo}?error=${encodeURIComponent(message)}`);
   }
 

@@ -1,5 +1,7 @@
 # Block Engine
 
+> **V2 legacy notice:** This document describes the V1 `apps/web` Block Engine. New V2 features must not depend on this block renderer or Payload page layout blocks. See [ADR-001](adr/ADR-001-V2-PLATFORM-ARCHITECTURE.md), [V1 Legacy Boundaries](V1_LEGACY_BOUNDARIES.md), and [V2 Architecture Guardrails](V2_ARCHITECTURE_GUARDRAILS.md).
+
 Milestone 8 creates the reusable Block Engine that future website sections will use. It does not implement the visual page builder, drag-and-drop editing, or real section designs.
 
 ## Purpose

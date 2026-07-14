@@ -8,7 +8,9 @@
       "@agency/database/*": ["../../packages/database/src/*"],
       "@agency/ui/*": ["../../packages/ui/src/*"],
       "@agency/lib/*": ["../../packages/lib/src/*"],
-      "@agency/types/*": ["../../packages/types/src/*"]
+      "@agency/types/*": ["../../packages/types/src/*"],
+      "@sharoz/contracts": ["../../packages/contracts/src/index.ts"],
+      "@sharoz/contracts/*": ["../../packages/contracts/src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

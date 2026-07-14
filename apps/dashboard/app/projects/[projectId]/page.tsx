@@ -21,6 +21,11 @@ import {
   projectStatusLabels,
 } from "@/lib/dashboard/projects";
 import { presentAuditLog } from "@/lib/dashboard/activity";
+import {
+  dashboardDateInputValue,
+  formatDashboardDate,
+  formatDashboardDateTime,
+} from "@/lib/dashboard/dates";
 import { getDashboardSessionContext } from "@/lib/session";
 
 export default async function ProjectDetailPage({
@@ -81,7 +86,7 @@ export default async function ProjectDetailPage({
                 {projectStatusLabels[project.status as keyof typeof projectStatusLabels]}
               </Badge>
               <span className="text-sm text-muted-foreground">
-                Target launch: {project.launchTargetAt?.toLocaleDateString() ?? "Not set"}
+                Target launch: {formatDashboardDate(project.launchTargetAt)}
               </span>
             </div>
             {detail.transitions.length === 0 ? (
@@ -129,7 +134,11 @@ export default async function ProjectDetailPage({
           <CardTitle className="text-base">Project Information</CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <form action={`/api/projects/${project.id}`} className="grid gap-3 xl:grid-cols-4" method="post">
+          <form
+            action={`/api/projects/${project.id}`}
+            className="grid gap-3 xl:grid-cols-4"
+            method="post"
+          >
             <div>
               <Label htmlFor="name">Project name</Label>
               <Input defaultValue={project.name} id="name" name="name" />
@@ -141,7 +150,7 @@ export default async function ProjectDetailPage({
             <div>
               <Label htmlFor="launchTargetAt">Target launch</Label>
               <Input
-                defaultValue={project.launchTargetAt?.toISOString().slice(0, 10) ?? ""}
+                defaultValue={dashboardDateInputValue(project.launchTargetAt)}
                 id="launchTargetAt"
                 name="launchTargetAt"
                 type="date"
@@ -205,7 +214,9 @@ export default async function ProjectDetailPage({
               activity.map((item) => (
                 <div className="py-3" key={item.id}>
                   <p className="text-sm font-medium">{item.description}</p>
-                  <p className="text-xs text-muted-foreground">{item.occurredAt.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDashboardDateTime(item.occurredAt)}
+                  </p>
                 </div>
               ))
             )}

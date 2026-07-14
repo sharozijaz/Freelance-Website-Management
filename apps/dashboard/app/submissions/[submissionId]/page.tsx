@@ -4,6 +4,7 @@ import { UnauthorizedState } from "@/components/state-panels";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { requireSubmissionAccess } from "@/lib/dashboard/content-ops";
+import { formatDashboardDateTime } from "@/lib/dashboard/dates";
 import { getDashboardSessionContext } from "@/lib/session";
 
 export default async function SubmissionDetailPage({
@@ -29,11 +30,14 @@ export default async function SubmissionDetailPage({
   const data = submission.data as Record<string, unknown>;
 
   return (
-    <DashboardPage description="Protected submission detail. Values are rendered as text only." title={submission.form.name}>
+    <DashboardPage
+      description="Protected submission detail. Values are rendered as text only."
+      title={submission.form.name}
+    >
       <section className="grid gap-4 xl:grid-cols-3">
         <Info label="Website" value={submission.website.name} />
         <Info label="Status" value={submission.status} />
-        <Info label="Submitted" value={submission.submittedAt.toLocaleString()} />
+        <Info label="Submitted" value={formatDashboardDateTime(submission.submittedAt)} />
       </section>
 
       <Card>

@@ -6,6 +6,7 @@ import {
 } from "@agency/auth/organizations";
 import type { MembershipRole } from "@agency/auth";
 import { database } from "@/lib/auth";
+import { toSafeErrorMessage } from "@/lib/errors";
 import { requireDashboardSessionContext } from "@/lib/session";
 
 function parseRole(value: FormDataEntryValue | null): MembershipRole {
@@ -46,7 +47,7 @@ export async function POST(
       throw new Error("Invalid membership action.");
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Membership could not be updated.";
+    const message = toSafeErrorMessage(error, "Membership could not be updated.");
     redirect(`/workspaces/${organizationId}/members?error=${encodeURIComponent(message)}`);
   }
 
