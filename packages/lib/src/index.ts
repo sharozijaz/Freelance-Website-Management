@@ -3,6 +3,7 @@ export {
   getDependentModuleKeys,
   getModuleDefinition,
   getModuleDependencies,
+  isModuleAvailable,
   isKnownModuleKey,
   isWebsiteType,
   listModuleDefinitions,

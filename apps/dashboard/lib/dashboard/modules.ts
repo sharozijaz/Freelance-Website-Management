@@ -3,7 +3,9 @@ import type { createDatabaseClient } from "@agency/database";
 import { auditLogs, websiteModules } from "@agency/database/schema";
 import {
   getDependentModuleKeys,
+  getModuleDefinition,
   getModuleDependencies,
+  isModuleAvailable,
   isKnownModuleKey,
   listModuleDefinitions,
 } from "@agency/lib/modules";
@@ -21,6 +23,7 @@ export class ModuleEnablementError extends Error {
 }
 
 export interface WebsiteModuleState {
+  availability: "available" | "planned";
   description: string;
   enabled: boolean;
   key: ModuleKey;
@@ -113,7 +116,7 @@ export async function listWebsiteModules({
   return {
     modules: listModuleDefinitions().map((definition) => ({
       ...definition,
-      enabled: enabledModules.has(definition.key),
+      enabled: definition.availability === "available" && enabledModules.has(definition.key),
     })),
     websiteType: website.websiteType,
   };
@@ -136,6 +139,10 @@ export async function isWebsiteModuleEnabled({
     request,
     websiteId,
   });
+  if (!isModuleAvailable(moduleKey)) {
+    return false;
+  }
+
   const existing = await database.query.websiteModules.findFirst({
     where: and(
       eq(websiteModules.organizationId, website.organizationId),
@@ -167,6 +174,12 @@ export async function enableWebsiteModule({
     websiteId,
   });
   assertSharozConnectedWebsite(website);
+
+  if (!isModuleAvailable(moduleKey)) {
+    throw new ModuleEnablementError(
+      `${getModuleDefinition(moduleKey).label} is planned, not available yet.`,
+    );
+  }
 
   const enabledModules = await getEnabledModuleKeySet({
     database,
@@ -232,6 +245,12 @@ export async function disableWebsiteModule({
     websiteId,
   });
   assertSharozConnectedWebsite(website);
+
+  if (!isModuleAvailable(moduleKey)) {
+    throw new ModuleEnablementError(
+      `${getModuleDefinition(moduleKey).label} is planned, not available yet.`,
+    );
+  }
 
   const enabledModules = await getEnabledModuleKeySet({
     database,

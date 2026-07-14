@@ -3,6 +3,7 @@ import {
   getDependentModuleKeys,
   getModuleDefinition,
   getModuleDependencies,
+  isModuleAvailable,
   isKnownModuleKey,
   isWebsiteType,
   listModuleDefinitions,
@@ -16,9 +17,21 @@ describe("first-party module registry", () => {
 
   it("looks up module definitions by key", () => {
     expect(getModuleDefinition("orders")).toMatchObject({
+      availability: "planned",
       key: "orders",
       label: "Orders",
     });
+  });
+
+  it("separates available modules from planned roadmap modules", () => {
+    expect(isModuleAvailable("blog")).toBe(true);
+    expect(isModuleAvailable("forms")).toBe(true);
+    expect(isModuleAvailable("media")).toBe(true);
+    expect(isModuleAvailable("seo")).toBe(true);
+    expect(isModuleAvailable("catalog")).toBe(false);
+    expect(isModuleAvailable("orders")).toBe(false);
+    expect(isModuleAvailable("customers")).toBe(false);
+    expect(isModuleAvailable("booking")).toBe(false);
   });
 
   it("validates known module keys", () => {

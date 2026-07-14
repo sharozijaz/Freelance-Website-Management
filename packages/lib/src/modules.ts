@@ -16,7 +16,7 @@ export const websiteTypeDescriptions = {
   external_legacy:
     "A site you track for support, renewals, notes, domains, and deployments, but the platform does not power its content or forms.",
   sharoz_connected:
-    "A custom-coded site that uses Sharoz Platform modules such as Blog, Forms, Media, SEO, Catalog, Orders, Customers, or Booking.",
+    "A custom-coded site that uses available Sharoz Platform modules such as Blog, Forms, Media, and SEO. Catalog, Orders, Customers, and Booking are planned roadmap modules.",
   wordpress:
     "An existing WordPress site you manage operationally. Use this when content still lives in WordPress but the agency tracks hosting, domains, updates, and client support here.",
 } satisfies Record<WebsiteType, string>;
@@ -37,6 +37,7 @@ export type ModuleKey = (typeof moduleKeys)[number];
 export const moduleKeySchema = z.enum(moduleKeys);
 
 export interface ModuleDefinition {
+  availability: "available" | "planned";
   description: string;
   key: ModuleKey;
   label: string;
@@ -44,42 +45,50 @@ export interface ModuleDefinition {
 
 const moduleDefinitions = [
   {
+    availability: "available",
     description: "Structured posts and publishing data for connected websites.",
     key: "blog",
     label: "Blog",
   },
   {
+    availability: "available",
     description: "Form definitions and submission workflows.",
     key: "forms",
     label: "Forms",
   },
   {
+    availability: "available",
     description: "Website-owned media assets and metadata.",
     key: "media",
     label: "Media",
   },
   {
+    availability: "available",
     description: "Search metadata, audits, and optimization workflows.",
     key: "seo",
     label: "SEO",
   },
   {
-    description: "Product, menu, or service catalog data.",
+    availability: "planned",
+    description: "Roadmap module for product, menu, or service catalog data.",
     key: "catalog",
     label: "Catalog",
   },
   {
-    description: "Order records and operational order workflows.",
+    availability: "planned",
+    description: "Roadmap module for order records and operational order workflows.",
     key: "orders",
     label: "Orders",
   },
   {
-    description: "Customer profiles and customer-owned activity.",
+    availability: "planned",
+    description: "Roadmap module for customer profiles and customer-owned activity.",
     key: "customers",
     label: "Customers",
   },
   {
-    description: "Appointment, reservation, or service booking data.",
+    availability: "planned",
+    description: "Roadmap module for appointment, reservation, or service booking data.",
     key: "booking",
     label: "Booking",
   },
@@ -116,6 +125,10 @@ export function getModuleDefinition(key: ModuleKey): ModuleDefinition {
   }
 
   return definition;
+}
+
+export function isModuleAvailable(key: ModuleKey): boolean {
+  return getModuleDefinition(key).availability === "available";
 }
 
 export function getModuleDependencies(key: ModuleKey): readonly ModuleKey[] {

@@ -74,7 +74,7 @@ export default async function WebsiteModulesPage({
 
       {moduleState.modules.length === 0 ? (
         <EmptyState
-          description="Modules such as Blog, Forms, Catalog, Orders, Customers, and Booking will appear here as the platform grows."
+          description="Available and planned platform modules will appear here as the platform grows."
           icon={<Blocks className="size-5" />}
           title="No modules registered"
         />
@@ -85,30 +85,53 @@ export default async function WebsiteModulesPage({
               <CardHeader className="p-4">
                 <CardTitle className="flex items-center justify-between gap-3 text-base">
                   <span>{module.label}</span>
-                  <Badge variant={module.enabled ? "success" : "outline"}>
-                    {module.enabled ? "Enabled" : "Disabled"}
+                  <Badge
+                    variant={
+                      module.availability === "planned"
+                        ? "warning"
+                        : module.enabled
+                          ? "success"
+                          : "outline"
+                    }
+                  >
+                    {module.availability === "planned"
+                      ? "Planned"
+                      : module.enabled
+                        ? "Enabled"
+                        : "Available"}
                   </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 p-4 pt-0">
                 <p className="text-sm text-muted-foreground">{module.description}</p>
-                <form action={`/api/websites/${website.id}/modules`} method="post">
-                  <input name="moduleKey" type="hidden" value={module.key} />
-                  <input
-                    name="action"
-                    type="hidden"
-                    value={module.enabled ? "disable" : "enable"}
-                  />
-                  <input name="returnTo" type="hidden" value={`/websites/${website.id}/modules`} />
-                  <Button
-                    disabled={!canManageModules}
-                    size="sm"
-                    type="submit"
-                    variant={module.enabled ? "outline" : "primary"}
-                  >
-                    {module.enabled ? "Disable" : "Enable"}
-                  </Button>
-                </form>
+                {module.availability === "planned" ? (
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Roadmap module. It will become toggleable after the backend, dashboard, and
+                    Platform API are implemented.
+                  </p>
+                ) : (
+                  <form action={`/api/websites/${website.id}/modules`} method="post">
+                    <input name="moduleKey" type="hidden" value={module.key} />
+                    <input
+                      name="action"
+                      type="hidden"
+                      value={module.enabled ? "disable" : "enable"}
+                    />
+                    <input
+                      name="returnTo"
+                      type="hidden"
+                      value={`/websites/${website.id}/modules`}
+                    />
+                    <Button
+                      disabled={!canManageModules}
+                      size="sm"
+                      type="submit"
+                      variant={module.enabled ? "outline" : "primary"}
+                    >
+                      {module.enabled ? "Disable" : "Enable"}
+                    </Button>
+                  </form>
+                )}
               </CardContent>
             </Card>
           ))}

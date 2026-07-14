@@ -250,7 +250,32 @@ describe("website module service", () => {
         request: createRequest(),
         websiteId: "site_1",
       }),
-    ).rejects.toThrow("Orders requires Catalog and Customers.");
+    ).rejects.toThrow("Orders is planned, not available yet.");
+  });
+
+  it("does not expose planned modules as enabled even if old rows exist", async () => {
+    const { database } = createDatabase({
+      modules: [
+        {
+          enabled: true,
+          id: "catalog",
+          moduleKey: "catalog",
+          organizationId: "org_1",
+          websiteId: "site_1",
+        },
+      ],
+    });
+
+    const state = await listWebsiteModules({
+      database,
+      request: createRequest(),
+      websiteId: "site_1",
+    });
+
+    expect(state.modules.find((module) => module.key === "catalog")).toMatchObject({
+      availability: "planned",
+      enabled: false,
+    });
   });
 
   it("rejects disabling catalog or customers while orders is enabled", async () => {
@@ -286,7 +311,7 @@ describe("website module service", () => {
         request: createRequest(),
         websiteId: "site_1",
       }),
-    ).rejects.toThrow("Orders requires Catalog and Customers.");
+    ).rejects.toThrow("Catalog is planned, not available yet.");
 
     await expect(
       disableWebsiteModule({
@@ -295,7 +320,7 @@ describe("website module service", () => {
         request: createRequest(),
         websiteId: "site_1",
       }),
-    ).rejects.toThrow("Orders requires Catalog and Customers.");
+    ).rejects.toThrow("Customers is planned, not available yet.");
   });
 
   it("enforces module permissions", async () => {

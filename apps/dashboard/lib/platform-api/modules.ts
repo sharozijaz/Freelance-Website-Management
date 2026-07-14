@@ -1,7 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import type { createDatabaseClient } from "@agency/database";
 import { websiteModules, websites } from "@agency/database/schema";
-import { isKnownModuleKey, type ModuleKey } from "@agency/lib/modules";
+import { isKnownModuleKey, isModuleAvailable, type ModuleKey } from "@agency/lib/modules";
 import type { PlatformRequestContext } from "./auth";
 import { PlatformApiError } from "./errors";
 
@@ -17,6 +17,10 @@ export async function requireEnabledModule({
   moduleKey: string;
 }): Promise<ModuleKey> {
   if (!isKnownModuleKey(moduleKey)) {
+    throw new PlatformApiError({ code: "MODULE_NOT_ENABLED" });
+  }
+
+  if (!isModuleAvailable(moduleKey)) {
     throw new PlatformApiError({ code: "MODULE_NOT_ENABLED" });
   }
 
