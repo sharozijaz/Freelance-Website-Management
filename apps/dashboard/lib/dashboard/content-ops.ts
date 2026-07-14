@@ -349,6 +349,21 @@ export async function createForm({
   }
 
   const slug = normalizeOrganizationSlug(name);
+  const existingForm = await database.query.forms.findFirst({
+    where: and(
+      eq(forms.organizationId, website.organizationId),
+      eq(forms.websiteId, website.id),
+      eq(forms.slug, slug),
+    ),
+    columns: { id: true },
+  });
+
+  if (existingForm) {
+    throw new FormValidationError(
+      "A form with this slug already exists for this website. Use a different form name.",
+    );
+  }
+
   const safeRedirect = validateSafeRedirect(input.redirectUrl);
   const fieldNames = new Set(input.fields.map((field) => field.name));
   if (fieldNames.size !== input.fields.length) {
