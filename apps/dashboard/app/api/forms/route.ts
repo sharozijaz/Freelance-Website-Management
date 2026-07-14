@@ -9,6 +9,7 @@ import {
   parseFormFieldDefinitions,
   type FormTemplate,
 } from "@/lib/dashboard/content-ops";
+import { revalidateFormsWorkspace } from "@/lib/dashboard/revalidation";
 import { toSafeErrorMessage } from "@/lib/errors";
 import { requireDashboardSessionContext } from "@/lib/session";
 
@@ -35,11 +36,12 @@ export async function POST(request: Request) {
         throw new Error("Form is required.");
       }
 
-      await archiveForm({
+      const form = await archiveForm({
         database,
         formId,
         request: createDashboardRequest(context),
       });
+      revalidateFormsWorkspace(form.websiteId, form.id);
     } else {
       const websiteId = stringValue(formData, "websiteId");
 
@@ -66,7 +68,7 @@ export async function POST(request: Request) {
                 ]
               : [];
 
-      await createForm({
+      const form = await createForm({
         database,
         input: {
           fields,
@@ -77,6 +79,7 @@ export async function POST(request: Request) {
         },
         request: createDashboardRequest(context),
       });
+      revalidateFormsWorkspace(form.websiteId, form.id);
     }
   } catch (error) {
     const message = toSafeErrorMessage(error, "Form action could not be completed.");

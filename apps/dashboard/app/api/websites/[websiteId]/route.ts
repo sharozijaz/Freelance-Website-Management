@@ -1,8 +1,8 @@
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { updateWebsiteType } from "@/lib/dashboard/projects";
+import { revalidateWebsiteWorkspace } from "@/lib/dashboard/revalidation";
 import { toSafeErrorMessage } from "@/lib/errors";
 import { requireDashboardSessionContext } from "@/lib/session";
 
@@ -37,9 +37,7 @@ export async function POST(
       websiteType,
     });
 
-    revalidatePath("/websites");
-    revalidatePath(`/websites/${websiteId}`);
-    revalidatePath(`/websites/${websiteId}/modules`);
+    revalidateWebsiteWorkspace(websiteId);
   } catch (error) {
     const message = toSafeErrorMessage(error, "Website could not be updated.");
     redirect(`${returnTo}?error=${encodeURIComponent(message)}`);

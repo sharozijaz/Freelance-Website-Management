@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { updateSubmissionStatus, type SubmissionStatus } from "@/lib/dashboard/content-ops";
+import { revalidateFormsWorkspace } from "@/lib/dashboard/revalidation";
 import { toSafeErrorMessage } from "@/lib/errors";
 import { requireDashboardSessionContext } from "@/lib/session";
 
@@ -23,12 +24,13 @@ export async function POST(
       throw new Error("Unsupported submission status.");
     }
 
-    await updateSubmissionStatus({
+    const submission = await updateSubmissionStatus({
       database,
       request: createDashboardRequest(context),
       status: status as SubmissionStatus,
       submissionId,
     });
+    revalidateFormsWorkspace(submission?.websiteId, submission?.formId);
   } catch (error) {
     const message = toSafeErrorMessage(error, "Submission could not be updated.");
     returnTo = `${returnTo}?error=${encodeURIComponent(message)}`;

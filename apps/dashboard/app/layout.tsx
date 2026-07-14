@@ -7,6 +7,10 @@ import { getDashboardShellData } from "@/lib/dashboard/queries";
 import { getDashboardSessionContext } from "@/lib/session";
 import "./globals.css";
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: {
     default: "Sharoz Platform",

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Building2,
   ChevronDown,
@@ -103,10 +103,63 @@ export function DashboardShell({
   const pathname = usePathname();
   const page = getPageContext(pathname);
   const titleWorkspaceSuffix = activeOrganization ? ` - ${activeOrganization.name}` : "";
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     document.title = `${page.title}${titleWorkspaceSuffix} | Sharoz Platform`;
   }, [page.title, titleWorkspaceSuffix]);
+
+  useEffect(() => {
+    setIsNavigating(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    function handleClick(event: MouseEvent) {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey) {
+        return;
+      }
+
+      const target = event.target instanceof Element ? event.target.closest("a[href]") : null;
+      if (!(target instanceof HTMLAnchorElement)) {
+        return;
+      }
+
+      const href = target.getAttribute("href");
+      if (
+        !href ||
+        href.startsWith("#") ||
+        target.target === "_blank" ||
+        target.hasAttribute("download")
+      ) {
+        return;
+      }
+
+      let url: URL;
+      try {
+        url = new URL(href, window.location.href);
+      } catch {
+        return;
+      }
+
+      if (url.origin === window.location.origin && url.pathname !== window.location.pathname) {
+        setIsNavigating(true);
+      }
+    }
+
+    function handleSubmit(event: SubmitEvent) {
+      if (!event.defaultPrevented) {
+        setIsNavigating(true);
+      }
+    }
+
+    document.addEventListener("click", handleClick, true);
+    document.addEventListener("submit", handleSubmit, true);
+
+    return () => {
+      document.removeEventListener("click", handleClick, true);
+      document.removeEventListener("submit", handleSubmit, true);
+    };
+  }, []);
 
   if (!context) {
     return <>{children}</>;
@@ -164,6 +217,11 @@ export function DashboardShell({
 
       <div className="min-w-0">
         <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
+          {isNavigating ? (
+            <div className="absolute inset-x-0 top-0 h-1 overflow-hidden bg-muted">
+              <div className="h-full w-1/2 animate-pulse bg-primary" />
+            </div>
+          ) : null}
           <div className="flex flex-col gap-3 px-4 py-3 md:px-6">
             <nav aria-label="Mobile dashboard" className="flex gap-2 overflow-x-auto lg:hidden">
               {navigation.map((item) => {

@@ -7,6 +7,10 @@ import {
 } from "@/lib/dashboard/projects";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
+import {
+  revalidateProjectWorkspace,
+  revalidateWebsiteWorkspace,
+} from "@/lib/dashboard/revalidation";
 import { toSafeErrorMessage } from "@/lib/errors";
 import { requireDashboardSessionContext } from "@/lib/session";
 
@@ -39,12 +43,18 @@ export async function POST(
       if (!status || !isProjectStatus(status)) {
         throw new Error("Invalid project status.");
       }
-      await transitionProject({ database, projectId, request: dashboardRequest, status });
+      const project = await transitionProject({
+        database,
+        projectId,
+        request: dashboardRequest,
+        status,
+      });
+      revalidateWebsiteWorkspace(project?.websiteId);
     } else if (action === "archive") {
       await archiveProject({ database, projectId, request: dashboardRequest });
       returnTo = "/projects";
     } else {
-      await updateProject({
+      const project = await updateProject({
         database,
         input: {
           figmaUrl: stringValue(formData, "figmaUrl"),
@@ -56,7 +66,10 @@ export async function POST(
         projectId,
         request: dashboardRequest,
       });
+      revalidateWebsiteWorkspace(project?.websiteId);
     }
+
+    revalidateProjectWorkspace(projectId);
   } catch (error) {
     const message = toSafeErrorMessage(error, "Project could not be updated.");
     redirect(`${returnTo}?error=${encodeURIComponent(message)}`);

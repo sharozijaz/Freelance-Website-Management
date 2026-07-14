@@ -2,6 +2,10 @@ import { redirect } from "next/navigation";
 import { createWebsite } from "@/lib/dashboard/projects";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
+import {
+  revalidateClientWorkspace,
+  revalidateWebsiteWorkspace,
+} from "@/lib/dashboard/revalidation";
 import { toSafeErrorMessage } from "@/lib/errors";
 import { requireDashboardSessionContext } from "@/lib/session";
 
@@ -44,6 +48,8 @@ export async function POST(request: Request) {
     });
 
     returnTo = `/websites/${website.id}`;
+    revalidateClientWorkspace(website.organizationId);
+    revalidateWebsiteWorkspace(website.id);
   } catch (error) {
     const message = toSafeErrorMessage(error, "Website could not be created.");
     redirect(`${returnTo}?error=${encodeURIComponent(message)}`);

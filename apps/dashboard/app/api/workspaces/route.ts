@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createOrganization } from "@agency/auth/organizations";
 import { database } from "@/lib/auth";
+import { revalidateClientWorkspace } from "@/lib/dashboard/revalidation";
 import { toSafeErrorMessage } from "@/lib/errors";
 import { requireDashboardSessionContext } from "@/lib/session";
 
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
     const contactEmail = value(formData, "contactEmail");
     const slug = value(formData, "slug");
 
-    await createOrganization({
+    const organization = await createOrganization({
       context,
       database,
       input: {
@@ -31,6 +32,8 @@ export async function POST(request: Request) {
         ...(slug ? { slug } : {}),
       },
     });
+
+    revalidateClientWorkspace(organization.id);
   } catch (error) {
     const message = toSafeErrorMessage(error, "Workspace could not be created.");
     redirect(`${returnTo}?error=${encodeURIComponent(message)}`);
