@@ -1,5 +1,6 @@
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@agency/ui";
 import type { BlogContentDocument } from "@agency/database/schema";
+import { MarkdownEditor } from "./markdown-editor";
 
 interface TaxonomyItem {
   id: string;
@@ -67,11 +68,10 @@ export function BlogPostForm({
             <Field label="Title" name="title" required value={post?.title} />
             <Field label="Slug" name="slug" value={post?.slug} />
             <TextArea label="Excerpt" name="excerpt" rows={3} value={post?.excerpt} />
-            <TextArea
-              help="Markdown article content. Future editor upgrades can preserve this portable content format."
+            <MarkdownEditor
+              help="Formatted article content stored as portable markdown for connected websites."
               label="Content"
               name="content"
-              rows={18}
               value={post?.content.markdown}
             />
           </CardContent>
