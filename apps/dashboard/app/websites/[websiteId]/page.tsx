@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { FileText, Globe2, Images, Inbox, Send } from "lucide-react";
@@ -54,30 +53,30 @@ export default async function WebsiteDetailPage({
             </Button>
           ) : null}
           <Button asChild size="sm" variant="outline">
-            <Link href={`/websites/${website.id}/hosting`}>Hosting</Link>
+            <a href={`/websites/${website.id}/hosting`}>Hosting</a>
           </Button>
           <Button asChild size="sm" variant="outline">
-            <Link href={`/websites/${website.id}/domains`}>Domains</Link>
+            <a href={`/websites/${website.id}/domains`}>Domains</a>
           </Button>
           <Button asChild size="sm" variant="outline">
-            <Link href={`/websites/${website.id}/launch`}>Launch</Link>
+            <a href={`/websites/${website.id}/launch`}>Launch</a>
           </Button>
           <Button asChild size="sm" variant="outline">
-            <Link href={`/websites/${website.id}/environments`}>Environments</Link>
+            <a href={`/websites/${website.id}/environments`}>Environments</a>
           </Button>
           <Button asChild size="sm" variant="outline">
-            <Link href={`/websites/${website.id}/modules`}>Modules</Link>
+            <a href={`/websites/${website.id}/modules`}>Modules</a>
           </Button>
           {website.websiteType === "sharoz_connected" ? (
             <Button asChild size="sm" variant="outline">
-              <Link href={`/websites/${website.id}/blog`}>Blog</Link>
+              <a href={`/websites/${website.id}/blog`}>Blog</a>
             </Button>
           ) : null}
           <Button asChild size="sm" variant="outline">
-            <Link href={`/websites/${website.id}/developer`}>Developer</Link>
+            <a href={`/websites/${website.id}/developer`}>Developer</a>
           </Button>
           <Button asChild size="sm">
-            <Link href={`/websites/${website.id}/seo`}>SEO</Link>
+            <a href={`/websites/${website.id}/seo`}>SEO</a>
           </Button>
         </>
       }
@@ -154,7 +153,7 @@ export default async function WebsiteDetailPage({
                 </Badge>
                 <div className="flex flex-wrap gap-2 pt-2">
                   <Button asChild size="sm" variant="outline">
-                    <Link href={`/projects/${project.id}`}>Open Project</Link>
+                    <a href={`/projects/${project.id}`}>Open Project</a>
                   </Button>
                   {project.figmaUrl ? (
                     <Button asChild size="sm" variant="outline">
@@ -192,7 +191,7 @@ export default async function WebsiteDetailPage({
                     </p>
                   </div>
                   <Button asChild size="sm" variant="outline">
-                    <Link
+                    <a
                       href={
                         item.type === "post"
                           ? `/websites/${website.id}/blog/${item.id}`
@@ -200,7 +199,7 @@ export default async function WebsiteDetailPage({
                       }
                     >
                       {item.type === "post" ? "Edit" : "Review"}
-                    </Link>
+                    </a>
                   </Button>
                 </div>
               ))
@@ -317,13 +316,13 @@ function OperationCard({
 }) {
   return (
     <Button asChild className="h-auto justify-start p-0" variant="ghost">
-      <Link className="w-full rounded-lg border border-border bg-surface p-4 text-left" href={href}>
+      <a className="w-full rounded-lg border border-border bg-surface p-4 text-left" href={href}>
         <span className="flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
           {icon}
           {label}
         </span>
         <span className="mt-2 block font-display text-2xl font-semibold">{value}</span>
-      </Link>
+      </a>
     </Button>
   );
 }
