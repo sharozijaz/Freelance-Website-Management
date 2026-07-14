@@ -472,6 +472,52 @@ export async function getForms({
   return { items: rows, page: params.page };
 }
 
+export async function archiveForm({
+  database,
+  formId,
+  request,
+}: {
+  database: Database;
+  formId: string;
+  request: DashboardRequest;
+}) {
+  const form = await database.query.forms.findFirst({
+    where: and(eq(forms.id, formId), isNull(forms.deletedAt)),
+  });
+
+  if (!form) {
+    throw new FormValidationError("Form was not found.");
+  }
+
+  assertDashboardPermission(request, "forms:manage", form.organizationId);
+  const now = new Date();
+
+  const [archived] = await database
+    .update(forms)
+    .set({
+      deletedAt: now,
+      status: "archived",
+      updatedAt: now,
+    })
+    .where(and(eq(forms.id, form.id), isNull(forms.deletedAt)))
+    .returning();
+
+  if (!archived) {
+    throw new FormValidationError("Form could not be archived.");
+  }
+
+  await database.insert(auditLogs).values({
+    action: "form.archived",
+    actorUserId: request.context.user.id,
+    metadata: { slug: form.slug, websiteId: form.websiteId },
+    organizationId: form.organizationId,
+    resourceId: form.id,
+    resourceType: "form",
+  });
+
+  return archived;
+}
+
 export async function getSubmissions({
   database,
   params,

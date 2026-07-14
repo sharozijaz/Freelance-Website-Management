@@ -179,9 +179,19 @@ export default async function FormsPage({
               </div>
               <span className="text-sm">{form.websiteName}</span>
               <span className="text-sm text-muted-foreground">{form.status}</span>
-              <Button asChild size="sm" variant="outline">
-                <Link href={`/submissions?formId=${form.id}`}>Submissions</Link>
-              </Button>
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/submissions?formId=${form.id}`}>Submissions</Link>
+                </Button>
+                <form action="/api/forms" method="post">
+                  <input name="_action" type="hidden" value="archive" />
+                  <input name="formId" type="hidden" value={form.id} />
+                  <input name="returnTo" type="hidden" value="/forms" />
+                  <Button size="sm" type="submit" variant="destructive">
+                    Archive
+                  </Button>
+                </form>
+              </div>
             </div>
           ))}
         </div>
