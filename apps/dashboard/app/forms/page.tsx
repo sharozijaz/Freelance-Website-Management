@@ -34,7 +34,9 @@ export default async function FormsPage({
     );
   }
 
-  const params = parseDashboardSearchParams(await searchParams);
+  const rawSearchParams = await searchParams;
+  const params = parseDashboardSearchParams(rawSearchParams);
+  const error = typeof rawSearchParams.error === "string" ? rawSearchParams.error : null;
   const request = createDashboardRequest(context);
   const [forms, options] = await Promise.all([
     getForms({ database, params, request }),
@@ -52,6 +54,12 @@ export default async function FormsPage({
         defaultStatus={params.status}
         statuses={["draft", "published", "archived"]}
       />
+
+      {error ? (
+        <Card className="border-error">
+          <CardContent className="p-4 text-sm text-error">{error}</CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader className="p-4">
@@ -155,6 +163,7 @@ export default async function FormsPage({
               <Button className="self-end" type="submit">
                 Create Form
               </Button>
+              <input name="returnTo" type="hidden" value="/forms" />
             </form>
           )}
         </CardContent>
