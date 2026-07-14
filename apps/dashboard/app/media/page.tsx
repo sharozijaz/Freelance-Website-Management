@@ -49,7 +49,7 @@ export default async function MediaPage({
           <Link href="/websites">Open Website Media</Link>
         </Button>
       }
-      description="Operational view of V2 media assets scoped to accessible client websites."
+      description="A cross-client media index. Files are managed inside each website so assets stay scoped to the right client."
       title="Media"
     >
       <FilterBar
@@ -61,7 +61,7 @@ export default async function MediaPage({
 
       {media.items.length === 0 ? (
         <EmptyState
-          description="Media registered through website-scoped V2 media workflows will appear here."
+          description="Open a website and register media there. This page then becomes the agency-wide index for missing alt text and asset review."
           icon={<Images className="size-5" />}
           title="No media found"
         />

@@ -42,7 +42,8 @@ export function DomainDiagnosticsClient({
         <div>
           <p className="text-sm font-medium">Observed Diagnostics</p>
           <p className="text-xs text-muted-foreground">
-            Server-side DNS and TLS observations. Manual status remains operator-controlled.
+            Real server-side DNS and TLS checks. Results are shown for this browser session; use
+            Save Status when you want the operational labels above to change.
           </p>
         </div>
         <Button

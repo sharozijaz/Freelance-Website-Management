@@ -51,7 +51,7 @@ export default async function SeoPage({
 
   return (
     <DashboardPage
-      description="Website-aware SEO findings from platform-controlled content and media data."
+      description="SEO attention list across client websites. Findings come from platform-controlled content, media metadata, and website settings."
       title="SEO Overview"
     >
       <section className="grid gap-3 md:grid-cols-4">
@@ -96,7 +96,7 @@ export default async function SeoPage({
 
       {seo.findings.length === 0 ? (
         <EmptyState
-          description="SEO findings will appear when accessible website content or media needs attention."
+          description="Add website content, media, and SEO metadata first. This page then flags missing titles, descriptions, alt text, and similar issues."
           icon={<SearchCheck className="size-5" />}
           title="No SEO findings"
         />

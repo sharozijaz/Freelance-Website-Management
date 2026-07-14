@@ -81,6 +81,10 @@ export default async function ProjectDetailPage({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 p-4 pt-0">
+            <p className="text-sm text-muted-foreground">
+              Only valid next steps are shown. This keeps the delivery workflow orderly while still
+              allowing a project to move backward when needed.
+            </p>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="info">
                 {projectStatusLabels[project.status as keyof typeof projectStatusLabels]}
@@ -123,7 +127,10 @@ export default async function ProjectDetailPage({
                 </Button>
               </div>
             ) : (
-              <EmptyState title="No website connected" />
+              <EmptyState
+                description="Connect a website when this project has an actual site record to manage domains, hosting, content, forms, SEO, and launches."
+                title="No website connected"
+              />
             )}
           </CardContent>
         </Card>

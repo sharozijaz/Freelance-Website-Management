@@ -8,8 +8,11 @@ import { getDashboardSessionContext } from "@/lib/session";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Agency Dashboard",
-  description: "Dashboard foundation for the Agency Website Platform.",
+  title: {
+    default: "Sharoz Platform",
+    template: "%s | Sharoz Platform",
+  },
+  description: "Agency operations dashboard for managed client websites.",
 };
 
 interface RootLayoutProps {

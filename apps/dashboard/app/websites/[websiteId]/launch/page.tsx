@@ -65,7 +65,7 @@ export default async function WebsiteLaunchPage({
           </Button>
         </>
       }
-      description="Server-derived readiness for moving this website from staging to production."
+      description="A final launch checklist for marking the website live after domain, SSL, deployment, and production URL are ready."
       title={`${readiness.website.name} Launch`}
     >
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -150,6 +150,10 @@ export default async function WebsiteLaunchPage({
           <CardTitle className="text-base">Record Launch</CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0">
+          <p className="mb-4 text-sm text-muted-foreground">
+            Launch is an agency milestone. It records that the website has gone live for the client;
+            it does not deploy code by itself.
+          </p>
           {readiness.website.launchedAt ? (
             <EmptyState
               description="Future production deployments do not overwrite the original launch timestamp."

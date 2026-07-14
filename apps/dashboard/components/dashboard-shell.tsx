@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import {
   Building2,
   ChevronDown,
@@ -21,7 +21,6 @@ import {
 import {
   Avatar,
   AvatarFallback,
-  Badge,
   Button,
   Dropdown,
   DropdownContent,
@@ -102,12 +101,17 @@ export function DashboardShell({
   organizations: OrganizationSummary[];
 }) {
   const pathname = usePathname();
+  const page = getPageContext(pathname);
+  const titleWorkspaceSuffix = activeOrganization ? ` - ${activeOrganization.name}` : "";
+
+  useEffect(() => {
+    document.title = `${page.title}${titleWorkspaceSuffix} | Sharoz Platform`;
+  }, [page.title, titleWorkspaceSuffix]);
 
   if (!context) {
     return <>{children}</>;
   }
 
-  const page = getPageContext(pathname);
   const returnTo = pathname || "/";
   const activeMembership = activeOrganization
     ? context.memberships.find(
@@ -117,6 +121,7 @@ export function DashboardShell({
     : null;
   const userLabel = context.user.name ?? context.user.email;
   const roleLabel = activeMembership?.role ?? "agency";
+  const activeWorkspaceLabel = activeOrganization?.name ?? "All clients";
 
   return (
     <div className="min-h-screen bg-background text-foreground lg:grid lg:grid-cols-[17rem_1fr]">
@@ -151,10 +156,8 @@ export function DashboardShell({
             })}
           </nav>
           <div className="border-t border-border p-4">
-            <p className="text-xs font-medium text-muted-foreground">Workspace</p>
-            <p className="mt-1 truncate text-sm font-medium">
-              {activeOrganization?.name ?? "Agency Overview"}
-            </p>
+            <p className="text-xs font-medium text-muted-foreground">Viewing</p>
+            <p className="mt-1 truncate text-sm font-medium">{activeWorkspaceLabel}</p>
           </div>
         </div>
       </aside>
@@ -187,36 +190,37 @@ export function DashboardShell({
                 <p className="text-xs font-medium uppercase text-muted-foreground">
                   {page.breadcrumb}
                 </p>
-                <div className="mt-1 flex flex-wrap items-center gap-2">
-                  <h1 className="font-display text-lg font-semibold">{page.title}</h1>
-                  <Badge variant={activeOrganization ? "info" : "outline"}>
-                    {activeOrganization ? "Client workspace" : "Agency workspace"}
-                  </Badge>
-                  <Badge variant="outline">{roleLabel.replaceAll("_", " ")}</Badge>
-                </div>
+                <h1 className="mt-1 font-display text-lg font-semibold">{page.title}</h1>
                 <p className="mt-1 text-sm text-muted-foreground">{page.description}</p>
               </div>
               <div className="flex flex-col gap-2 text-sm md:flex-row md:items-center">
-                <form action="/api/workspaces/switch" className="flex gap-2" method="post">
+                <form
+                  action="/api/workspaces/switch"
+                  className="flex flex-col gap-1 md:flex-row md:items-end"
+                  method="post"
+                >
                   <label className="sr-only" htmlFor="organizationId">
-                    Switch workspace
+                    Viewing scope
                   </label>
-                  <select
-                    className="h-9 max-w-56 rounded-md border border-border bg-background px-3 text-sm"
-                    defaultValue={activeOrganization?.id ?? ""}
-                    id="organizationId"
-                    name="organizationId"
-                  >
-                    <option value="">Agency Overview</option>
-                    {organizations.map((organization) => (
-                      <option key={organization.id} value={organization.id}>
-                        {organization.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-muted-foreground">Viewing scope</span>
+                    <select
+                      className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm md:w-56"
+                      defaultValue={activeOrganization?.id ?? ""}
+                      id="organizationId"
+                      name="organizationId"
+                    >
+                      <option value="">Agency overview (all clients)</option>
+                      {organizations.map((organization) => (
+                        <option key={organization.id} value={organization.id}>
+                          {organization.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <input name="returnTo" type="hidden" value={returnTo} />
                   <Button size="sm" type="submit" variant="outline">
-                    Switch
+                    Apply
                   </Button>
                 </form>
                 <Dropdown>
@@ -233,11 +237,11 @@ export function DashboardShell({
                     <DropdownLabel>
                       <span className="block truncate">{userLabel}</span>
                       <span className="block truncate text-xs font-normal text-muted-foreground">
-                        {activeOrganization?.name ?? "Agency Overview"}
+                        {activeOrganization?.name ?? "Agency overview"}
                       </span>
                     </DropdownLabel>
                     <DropdownSeparator />
-                    <DropdownItem disabled>{roleLabel.replaceAll("_", " ")}</DropdownItem>
+                    <DropdownItem disabled>Role: {roleLabel.replaceAll("_", " ")}</DropdownItem>
                     <DropdownSeparator />
                     <DropdownItem
                       onSelect={(event) => {
@@ -251,9 +255,7 @@ export function DashboardShell({
               </div>
             </div>
             <div>
-              <p className="sr-only">
-                Active workspace: {activeOrganization?.name ?? "Agency Overview"}
-              </p>
+              <p className="sr-only">Viewing scope: {activeWorkspaceLabel}</p>
             </div>
           </div>
         </header>

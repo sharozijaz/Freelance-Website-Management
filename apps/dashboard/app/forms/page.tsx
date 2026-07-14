@@ -43,7 +43,7 @@ export default async function FormsPage({
 
   return (
     <DashboardPage
-      description="Website form definitions and submission workflow entry point."
+      description="Create website-owned forms and review submissions. Custom websites submit to these forms through the Platform API."
       title="Forms"
     >
       <FilterBar
@@ -59,7 +59,10 @@ export default async function FormsPage({
         </CardHeader>
         <CardContent className="p-4 pt-0">
           {options.websites.length === 0 ? (
-            <EmptyState title="Create a website before adding forms" />
+            <EmptyState
+              description="Forms belong to a website because submissions must stay scoped to the right client and site."
+              title="Create a website before adding forms"
+            />
           ) : (
             <form action="/api/forms" className="grid gap-3 xl:grid-cols-4" method="post">
               <div>
@@ -120,7 +123,7 @@ export default async function FormsPage({
 
       {forms.items.length === 0 ? (
         <EmptyState
-          description="Forms created for accessible websites will appear here."
+          description="Create a form for a website, then connect the custom website form to the Platform API."
           icon={<Send className="size-5" />}
           title="No forms found"
         />

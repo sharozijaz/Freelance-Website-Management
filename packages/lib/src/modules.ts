@@ -13,9 +13,12 @@ export const websiteTypeLabels = {
 } satisfies Record<WebsiteType, string>;
 
 export const websiteTypeDescriptions = {
-  external_legacy: "Externally managed or unsupported website tracked operationally.",
-  sharoz_connected: "Custom website connected to Sharoz Platform modules.",
-  wordpress: "Existing WordPress website managed operationally.",
+  external_legacy:
+    "A site you track for support, renewals, notes, domains, and deployments, but the platform does not power its content or forms.",
+  sharoz_connected:
+    "A custom-coded site that uses Sharoz Platform modules such as Blog, Forms, Media, SEO, Catalog, Orders, Customers, or Booking.",
+  wordpress:
+    "An existing WordPress site you manage operationally. Use this when content still lives in WordPress but the agency tracks hosting, domains, updates, and client support here.",
 } satisfies Record<WebsiteType, string>;
 
 export const moduleKeys = [

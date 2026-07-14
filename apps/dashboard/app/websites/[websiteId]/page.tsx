@@ -97,36 +97,32 @@ export default async function WebsiteDetailPage({
           <CardTitle className="text-base">Website Type</CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <form
-            action={`/api/websites/${website.id}`}
-            className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]"
-            method="post"
-          >
-            <div>
-              <label className="text-sm font-medium" htmlFor="websiteType">
-                Integration model
-              </label>
-              <select
-                className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                defaultValue={website.websiteType}
-                id="websiteType"
-                name="websiteType"
-                required
-              >
-                {websiteTypes.map((websiteType) => (
-                  <option key={websiteType} value={websiteType}>
-                    {websiteTypeLabels[websiteType]}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {websiteTypeDescriptions[website.websiteType]}
-              </p>
+          <form action={`/api/websites/${website.id}`} className="space-y-3" method="post">
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+              <div>
+                <label className="text-sm font-medium" htmlFor="websiteType">
+                  Integration model
+                </label>
+                <select
+                  className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  defaultValue={website.websiteType}
+                  id="websiteType"
+                  name="websiteType"
+                  required
+                >
+                  {websiteTypes.map((websiteType) => (
+                    <option key={websiteType} value={websiteType}>
+                      {websiteTypeLabels[websiteType]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button type="submit">Save Type</Button>
             </div>
+            <p className="text-sm text-muted-foreground">
+              {websiteTypeDescriptions[website.websiteType]}
+            </p>
             <input name="returnTo" type="hidden" value={`/websites/${website.id}`} />
-            <Button className="self-end" type="submit">
-              Save Type
-            </Button>
           </form>
         </CardContent>
       </Card>

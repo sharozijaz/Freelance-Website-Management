@@ -40,7 +40,7 @@ export default async function DeploymentsPage({
 
   return (
     <DashboardPage
-      description="Deployment status and release history across accessible client websites."
+      description="Release history for client websites. For now this is populated by manual deployment records and future provider integrations."
       title="Deployments"
     >
       <FilterBar
@@ -52,7 +52,7 @@ export default async function DeploymentsPage({
 
       {deployments.items.length === 0 ? (
         <EmptyState
-          description="Connect hosting from a website record, then record or sync deployments."
+          description="Open a website, connect hosting, then record a deployment when you upload, publish, or release a new version."
           icon={<Rocket className="size-5" />}
           title="No deployments found"
         />

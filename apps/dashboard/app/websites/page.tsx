@@ -158,7 +158,7 @@ export default async function WebsitesPage({
             <span>Deployment</span>
             <span>Domain</span>
             <span>Updated</span>
-            <span>Open</span>
+            <span>Actions</span>
           </div>
           {websites.items.map((website) => (
             <div
@@ -187,12 +187,14 @@ export default async function WebsitesPage({
               <span className="text-sm text-muted-foreground">
                 {formatDashboardDate(website.updatedAt)}
               </span>
-              <Button asChild size="sm" variant="outline">
-                <Link href={`/websites/${website.id}`}>Open</Link>
-              </Button>
-              <Button asChild size="sm" variant="ghost">
-                <Link href={`/websites/${website.id}/hosting`}>Hosting</Link>
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/websites/${website.id}`}>Open</Link>
+                </Button>
+                <Button asChild size="sm" variant="ghost">
+                  <Link href={`/websites/${website.id}/hosting`}>Hosting</Link>
+                </Button>
+              </div>
             </div>
           ))}
         </div>

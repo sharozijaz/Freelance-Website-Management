@@ -137,7 +137,7 @@ export default async function WebsiteDomainsPage({
           </Button>
         </>
       }
-      description="Manage production and staging hostnames without crossing environment boundaries."
+      description="Track which hostnames belong to staging or production. This does not buy or register domains; it records and verifies domains you already control."
       title={`${domainState.website.name} Domains`}
     >
       <Card>
@@ -145,6 +145,11 @@ export default async function WebsiteDomainsPage({
           <CardTitle className="text-base">Add Domain</CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0">
+          <p className="mb-4 text-sm text-muted-foreground">
+            Add the exact hostname you point at this website, such as 2026.sharoz.dev or
+            www.client.com. Choose production only when the hostname should be treated as the public
+            live address.
+          </p>
           <form action={addDomain} className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
             <div>
               <Label htmlFor="domain">Domain</Label>

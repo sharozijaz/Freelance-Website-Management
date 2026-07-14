@@ -44,7 +44,7 @@ export default async function WebsiteModulesPage({
           <Link href={`/websites/${website.id}`}>Back to Website</Link>
         </Button>
       }
-      description="Modules provide data and business capabilities to connected websites. Your public website controls how this data is presented."
+      description="Enable backend capabilities for this website. A custom site can then use the Platform API for only the modules this client needs."
       title={`${website.name} Modules`}
     >
       {error ? (
@@ -73,7 +73,11 @@ export default async function WebsiteModulesPage({
       </Card>
 
       {moduleState.modules.length === 0 ? (
-        <EmptyState icon={<Blocks className="size-5" />} title="No modules registered" />
+        <EmptyState
+          description="Modules such as Blog, Forms, Catalog, Orders, Customers, and Booking will appear here as the platform grows."
+          icon={<Blocks className="size-5" />}
+          title="No modules registered"
+        />
       ) : (
         <section className="grid gap-4 xl:grid-cols-2">
           {moduleState.modules.map((module) => (

@@ -103,7 +103,7 @@ export default async function ClientsPage({
             <span>Websites</span>
             <span>Members</span>
             <span>Last activity</span>
-            <span>Open</span>
+            <span>Actions</span>
           </div>
           {clients.items.map((client) => (
             <div
@@ -122,7 +122,7 @@ export default async function ClientsPage({
               <span className="text-sm text-muted-foreground">
                 {formatDashboardDate(client.lastActivityAt, "No activity")}
               </span>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <form action="/api/workspaces/switch" method="post">
                   <input name="organizationId" type="hidden" value={client.id} />
                   <input name="returnTo" type="hidden" value={`/clients/${client.id}`} />
@@ -135,6 +135,19 @@ export default async function ClientsPage({
                     <ArrowRight className="size-4" />
                   </Link>
                 </Button>
+                {client.id === request.access.activeOrganizationId ? (
+                  <Button disabled size="sm" variant="outline">
+                    Active
+                  </Button>
+                ) : (
+                  <form action={`/api/workspaces/${client.id}`} method="post">
+                    <input name="action" type="hidden" value="archive" />
+                    <input name="returnTo" type="hidden" value="/clients" />
+                    <Button size="sm" type="submit" variant="destructive">
+                      Archive
+                    </Button>
+                  </form>
+                )}
               </div>
             </div>
           ))}

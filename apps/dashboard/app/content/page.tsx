@@ -56,7 +56,7 @@ export default async function ContentPage({
           </Button>
         </>
       }
-      description="V2 content operations across Blog, Media, Forms, and SEO workflows."
+      description="A cross-client content inbox. Blog posts and CMS-controlled records from connected websites appear here."
       title="Content Operations"
     >
       <section className="grid gap-3 md:grid-cols-3">
@@ -122,7 +122,7 @@ export default async function ContentPage({
 
       {content.items.length === 0 ? (
         <EmptyState
-          description="V2 Blog posts and legacy page records will appear here when platform content is available."
+          description="Create or connect a Sharoz Connected website with the Blog module enabled, then posts and page records will appear here."
           icon={<FileText className="size-5" />}
           title="No content found"
         />

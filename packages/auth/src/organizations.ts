@@ -344,6 +344,67 @@ export async function createOrganization({
   return organization;
 }
 
+export async function archiveOrganization({
+  context,
+  database,
+  organizationId,
+}: {
+  context: SessionContext;
+  database: Database;
+  organizationId: string;
+}) {
+  if (!hasAgencyAdminAccess(context)) {
+    throw new PermissionDeniedError("Only agency users can archive client workspaces.");
+  }
+
+  const organization = await database.query.organizations.findFirst({
+    where: and(eq(organizations.id, organizationId), isNull(organizations.deletedAt)),
+  });
+
+  if (!organization) {
+    throw new OrganizationValidationError("Client workspace was not found.");
+  }
+
+  const [activeCount] = await database
+    .select({ value: count() })
+    .from(organizations)
+    .where(and(eq(organizations.status, "active"), isNull(organizations.deletedAt)));
+
+  if (!activeCount || activeCount.value <= 1) {
+    throw new OrganizationValidationError("Cannot archive the final active client workspace.");
+  }
+
+  const now = new Date();
+  const [updated] = await database.transaction(async (tx) => {
+    const [row] = await tx
+      .update(organizations)
+      .set({
+        deletedAt: now,
+        status: "archived",
+        updatedAt: now,
+      })
+      .where(eq(organizations.id, organization.id))
+      .returning();
+
+    if (!row) {
+      throw new OrganizationValidationError("Client workspace could not be archived.");
+    }
+
+    await tx.insert(auditLogs).values({
+      action: "organization.archived",
+      actorUserId: context.user.id,
+      metadata: { slug: organization.slug },
+      organizationId: organization.id,
+      resourceId: organization.id,
+      resourceType: "organization",
+    });
+
+    return [row];
+  });
+
+  return updated;
+}
+
 export async function switchActiveOrganization({
   context,
   database,

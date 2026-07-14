@@ -149,7 +149,7 @@ export default async function WebsiteHostingPage({
           ) : null}
         </>
       }
-      description="Provider connection, deployments, domains, DNS records, and production routing."
+      description="Record where this site is hosted, what URL is live, and the deployment events you want to track for the client."
       title={`${hosting.website.name} Hosting`}
     >
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -175,6 +175,11 @@ export default async function WebsiteHostingPage({
             <CardTitle className="text-base">Manual / External Hosting</CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
+            <p className="mb-4 text-sm text-muted-foreground">
+              Use this for cPanel, WordPress hosting, manual uploads, or any provider that is not
+              connected by API yet. It stores the provider name, live URL, and notes for your agency
+              operations.
+            </p>
             <form action={connectManual} className="grid gap-3 md:grid-cols-2">
               <div>
                 <Label htmlFor="hostingProviderName">Provider name</Label>
@@ -280,7 +285,7 @@ export default async function WebsiteHostingPage({
               </form>
             ) : (
               <EmptyState
-                description="Connect manual hosting before recording a deployment."
+                description="A deployment is a release event, for example: uploaded a new build, updated WordPress, or pushed a new version live."
                 title="No hosting connection"
               />
             )}
