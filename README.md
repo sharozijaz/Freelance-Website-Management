@@ -29,4 +29,4 @@ V2 is an agency control plane and modular website services platform. The dashboa
 
 Several older documents describe the V1 Payload CMS page-builder direction. They are preserved for history and migration context only. New V2 work must follow the ADR and guardrails above.
 
-The next implementation milestone is **V2 Milestone 2 — Website Type and Module Enablement Foundation**.
+The next implementation focus is **Dashboard Reliability + Editor Quality**. Current working priorities are tracked in [V2 Product Direction](docs/V2_PRODUCT_DIRECTION.md#current-stabilization-backlog).

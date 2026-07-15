@@ -155,6 +155,52 @@ Current practical status:
 
 The platform should complete one module end-to-end before expanding too many modules in parallel.
 
+## Current Stabilization Backlog
+
+This section captures the current working direction so the project does not drift back into the older V1 page-builder plan or spread too thin across unfinished modules.
+
+### Immediate Focus
+
+1. Dashboard reliability and navigation quality
+   - Verify the latest deployed dashboard supports normal left-click navigation across sidebar routes, website detail tabs, and row actions.
+   - Keep one consistent website-level navigation pattern across Overview, Hosting, Domains, Launch, Environments, Modules, Blog, Media, Forms, Deployments, Developer, and SEO.
+   - Keep browser tab titles specific to the current page.
+   - Remove duplicate menus, floating back buttons, and confusing one-off navigation buttons.
+   - Improve perceived sluggishness before adding large new modules.
+
+2. Blog editor quality
+   - Replace the plain textarea-style writing experience with a proper rich article editor.
+   - Required editing controls include headings, bold, italic, strike, lists, links, quotes, code, media insertion, preview, drafts, and autosave.
+   - Public rendering still belongs to the connected website, but the platform should store clean portable article content.
+
+3. Forms management polish
+   - Keep form slugs unique per website, not globally.
+   - Provide clear create, edit, duplicate, archive, and permanent delete workflows.
+   - Improve the field builder so common forms such as contact and catering do not require fragile manual field syntax.
+   - Improve the submissions inbox with read/unread state, notes, export, and better filtering.
+
+4. Connected website integration documentation
+   - Document how a Codex-built custom website connects to the platform.
+   - Include website id, environment credentials, enabled modules, API examples, and expected behavior for Blog, Forms, Media, and SEO.
+   - Create a reusable prompt/template for future Codex-built client websites so new projects integrate with the platform consistently.
+
+5. Real demo workflow validation
+   - Use the Spice Harbor/2026 demo as a full workflow test case.
+   - Validate Hosting, Domains, Launch, Developer credentials, Blog publishing, Forms submission, SEO metadata, and module enablement as one connected flow.
+
+### Deferred On Purpose
+
+- Catalog, Orders, Customers, and Booking remain roadmap modules until Blog, Forms, Media, and SEO are stable end to end.
+- Object storage and long-term storage cost planning are deferred until the platform feature set is stable enough to estimate real media volume.
+- A full UI framework migration is deferred. The dashboard should continue using the current shadcn/ui and `@agency/ui` foundation while improving consistency.
+- The V1 Payload page builder, block engine, and public renderer are legacy/transitional references, not the driver of current V2 product work.
+
+### Next Implementation Milestone
+
+The next implementation focus is **Dashboard Reliability + Editor Quality**.
+
+Start with navigation reliability and the rich blog editor, then continue into Forms management polish and connected website integration docs.
+
 ## Client Responsibilities
 
 Clients should be able to:
