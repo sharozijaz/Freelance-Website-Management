@@ -10,6 +10,10 @@ import { formatDashboardDate, formatDashboardDateTime } from "@/lib/dashboard/da
 import { getClientWorkspaceOverview } from "@/lib/dashboard/queries";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Client Workspace",
+};
+
 export default async function ClientWorkspacePage({
   params,
 }: {

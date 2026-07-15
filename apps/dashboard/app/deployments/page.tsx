@@ -11,6 +11,10 @@ import { parseDashboardSearchParams } from "@/lib/dashboard/filters";
 import { getDeployments } from "@/lib/deployment/services";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Deployments",
+};
+
 export default async function DeploymentsPage({
   searchParams,
 }: {

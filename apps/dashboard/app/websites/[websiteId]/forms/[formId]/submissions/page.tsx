@@ -9,6 +9,10 @@ import { getSubmissions } from "@/lib/dashboard/content-ops";
 import { formatDashboardDateTime } from "@/lib/dashboard/dates";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Form Submissions",
+};
+
 export default async function WebsiteFormSubmissionsPage({
   params,
 }: {

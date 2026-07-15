@@ -7,6 +7,10 @@ import { requireSubmissionAccess } from "@/lib/dashboard/content-ops";
 import { formatDashboardDateTime } from "@/lib/dashboard/dates";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Submission",
+};
+
 export default async function SubmissionDetailPage({
   params,
 }: {

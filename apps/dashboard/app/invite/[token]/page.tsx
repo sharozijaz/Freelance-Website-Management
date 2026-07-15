@@ -1,5 +1,9 @@
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from "@agency/ui";
 
+export const metadata = {
+  title: "Invitation",
+};
+
 export default async function InvitationAcceptancePage({
   params,
   searchParams,

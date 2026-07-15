@@ -10,6 +10,10 @@ import { listWebsiteCredentials } from "@/lib/dashboard/website-credentials";
 import { getDashboardSessionContext } from "@/lib/session";
 import { CredentialsClient } from "./credentials-client";
 
+export const metadata = {
+  title: "Developer",
+};
+
 export default async function WebsiteDeveloperPage({
   params,
 }: {

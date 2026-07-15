@@ -43,6 +43,10 @@ function errorMessage(value: string | string[] | undefined) {
   return typeof value === "string" ? value : null;
 }
 
+export const metadata = {
+  title: "Website Media",
+};
+
 export default async function WebsiteMediaPage({
   params,
   searchParams,

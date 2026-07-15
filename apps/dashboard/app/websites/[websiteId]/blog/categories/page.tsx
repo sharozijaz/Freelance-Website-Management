@@ -8,6 +8,10 @@ import { listBlogCategories } from "@/lib/dashboard/blog";
 import { getWebsiteDetail } from "@/lib/dashboard/projects";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Blog Categories",
+};
+
 export default async function BlogCategoriesPage({
   params,
   searchParams,

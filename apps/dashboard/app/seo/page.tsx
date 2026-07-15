@@ -9,6 +9,10 @@ import { parseDashboardSearchParams } from "@/lib/dashboard/filters";
 import { getSeoOperations } from "@/lib/dashboard/seo";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "SEO",
+};
+
 export default async function SeoPage({
   searchParams,
 }: {

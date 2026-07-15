@@ -46,6 +46,10 @@ function revalidateHostingPaths(websiteId: string) {
   revalidatePath(`/websites/${websiteId}/launch`);
 }
 
+export const metadata = {
+  title: "Website Hosting",
+};
+
 export default async function WebsiteHostingPage({
   params,
 }: {

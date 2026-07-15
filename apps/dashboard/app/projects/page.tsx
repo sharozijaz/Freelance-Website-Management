@@ -26,6 +26,10 @@ import {
 import { formatDashboardDate } from "@/lib/dashboard/dates";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Projects",
+};
+
 export default async function ProjectsPage({
   searchParams,
 }: {

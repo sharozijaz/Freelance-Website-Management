@@ -18,6 +18,10 @@ import { getForms } from "@/lib/dashboard/content-ops";
 import { getWebsiteDetail } from "@/lib/dashboard/projects";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Website Forms",
+};
+
 export default async function WebsiteFormsPage({
   params,
 }: {

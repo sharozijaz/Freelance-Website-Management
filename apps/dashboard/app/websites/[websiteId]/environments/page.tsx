@@ -15,6 +15,10 @@ function formString(formData: FormData, name: string) {
   return typeof value === "string" ? value : "";
 }
 
+export const metadata = {
+  title: "Website Environments",
+};
+
 export default async function WebsiteEnvironmentsPage({
   params,
 }: {

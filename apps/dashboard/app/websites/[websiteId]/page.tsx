@@ -23,6 +23,10 @@ import { getWebsiteDetail, projectStatusLabels } from "@/lib/dashboard/projects"
 import type { DashboardRequest } from "@/lib/dashboard/types";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Website",
+};
+
 export default async function WebsiteDetailPage({
   params,
 }: {

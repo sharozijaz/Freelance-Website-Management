@@ -23,6 +23,10 @@ import { getWebsites } from "@/lib/dashboard/queries";
 import { getProjectCreationOptions } from "@/lib/dashboard/projects";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Websites",
+};
+
 export default async function WebsitesPage({
   searchParams,
 }: {

@@ -9,6 +9,10 @@ import { listActiveWebsiteMediaForSelection, MediaDomainError } from "@/lib/dash
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Blog Post",
+};
+
 export default async function EditBlogPostPage({
   params,
   searchParams,

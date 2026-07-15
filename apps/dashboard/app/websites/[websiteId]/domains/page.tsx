@@ -42,6 +42,10 @@ function revalidateDomainPaths(websiteId: string) {
   revalidatePath(`/websites/${websiteId}/launch`);
 }
 
+export const metadata = {
+  title: "Website Domains",
+};
+
 export default async function WebsiteDomainsPage({
   params,
 }: {

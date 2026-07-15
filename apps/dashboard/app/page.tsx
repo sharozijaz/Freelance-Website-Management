@@ -19,6 +19,10 @@ import { formatDashboardDateTime } from "@/lib/dashboard/dates";
 import { getAgencyOverview } from "@/lib/dashboard/queries";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Overview",
+};
+
 export default async function AgencyOverviewPage() {
   const context = await getDashboardSessionContext();
 

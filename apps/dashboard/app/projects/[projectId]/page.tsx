@@ -28,6 +28,10 @@ import {
 } from "@/lib/dashboard/dates";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Project",
+};
+
 export default async function ProjectDetailPage({
   params,
 }: {

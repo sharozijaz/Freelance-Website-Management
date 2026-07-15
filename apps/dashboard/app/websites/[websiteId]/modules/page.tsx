@@ -10,6 +10,10 @@ import { listWebsiteModules } from "@/lib/dashboard/modules";
 import { getWebsiteDetail } from "@/lib/dashboard/projects";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Website Modules",
+};
+
 export default async function WebsiteModulesPage({
   params,
   searchParams,

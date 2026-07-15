@@ -8,6 +8,10 @@ import { createDashboardRequest } from "@/lib/dashboard/access";
 import { getWebsiteSeoOperations } from "@/lib/dashboard/seo";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Website SEO",
+};
+
 export default async function WebsiteSeoPage({
   params,
 }: {

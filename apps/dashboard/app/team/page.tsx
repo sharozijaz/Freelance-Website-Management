@@ -19,6 +19,10 @@ import { formatDashboardDate } from "@/lib/dashboard/dates";
 import { getTeamOperations } from "@/lib/dashboard/queries";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Team",
+};
+
 export default async function TeamPage() {
   const context = await getDashboardSessionContext();
   if (!context) {

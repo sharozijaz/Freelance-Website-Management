@@ -11,6 +11,10 @@ import { formatDashboardDate } from "@/lib/dashboard/dates";
 import { parseDashboardSearchParams } from "@/lib/dashboard/filters";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Media",
+};
+
 export default async function MediaPage({
   searchParams,
 }: {

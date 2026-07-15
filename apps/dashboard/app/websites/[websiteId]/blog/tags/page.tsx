@@ -8,6 +8,10 @@ import { listBlogTags } from "@/lib/dashboard/blog";
 import { getWebsiteDetail } from "@/lib/dashboard/projects";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Blog Tags",
+};
+
 export default async function BlogTagsPage({
   params,
   searchParams,

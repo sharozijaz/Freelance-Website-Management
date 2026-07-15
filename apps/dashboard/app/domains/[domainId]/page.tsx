@@ -21,6 +21,10 @@ function formString(formData: FormData, name: string) {
   return typeof value === "string" ? value : "";
 }
 
+export const metadata = {
+  title: "Domain",
+};
+
 export default async function DomainDetailPage({
   params,
 }: {

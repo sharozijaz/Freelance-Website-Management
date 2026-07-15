@@ -21,6 +21,10 @@ import { getClients } from "@/lib/dashboard/queries";
 import { getDashboardSessionContext } from "@/lib/session";
 import { formatDashboardDate } from "@/lib/dashboard/dates";
 
+export const metadata = {
+  title: "Clients",
+};
+
 export default async function ClientsPage({
   searchParams,
 }: {

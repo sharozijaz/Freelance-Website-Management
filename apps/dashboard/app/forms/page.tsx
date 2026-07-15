@@ -20,6 +20,10 @@ import { parseDashboardSearchParams } from "@/lib/dashboard/filters";
 import { getProjectCreationOptions } from "@/lib/dashboard/projects";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Forms",
+};
+
 export default async function FormsPage({
   searchParams,
 }: {

@@ -10,6 +10,10 @@ import { formatDashboardDateTime } from "@/lib/dashboard/dates";
 import { getWebsiteDetail } from "@/lib/dashboard/projects";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Website Blog",
+};
+
 export default async function BlogPostsPage({
   params,
   searchParams,

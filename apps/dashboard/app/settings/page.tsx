@@ -6,6 +6,10 @@ import { createDashboardRequest } from "@/lib/dashboard/access";
 import { getDashboardShellData } from "@/lib/dashboard/queries";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Settings",
+};
+
 export default async function SettingsPage() {
   const context = await getDashboardSessionContext();
 

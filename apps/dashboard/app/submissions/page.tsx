@@ -11,6 +11,10 @@ import { formatDashboardDateTime } from "@/lib/dashboard/dates";
 import { parseDashboardSearchParams } from "@/lib/dashboard/filters";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Form Submissions",
+};
+
 export default async function SubmissionsPage({
   searchParams,
 }: {

@@ -8,6 +8,10 @@ import { formatDashboardDateTime } from "@/lib/dashboard/dates";
 import { getDeploymentDetail } from "@/lib/deployment/services";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Deployment",
+};
+
 export default async function DeploymentDetailPage({
   params,
 }: {

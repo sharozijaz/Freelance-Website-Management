@@ -3,6 +3,10 @@ import { membershipRoles, listOrganizationMembers } from "@agency/auth/organizat
 import { database } from "@/lib/auth";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Workspace Members",
+};
+
 export default async function WorkspaceMembersPage({
   params,
   searchParams,

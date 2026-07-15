@@ -10,6 +10,10 @@ import { formatDashboardDateTime } from "@/lib/dashboard/dates";
 import { getWebsiteLaunchReadiness, recordWebsiteLaunch } from "@/lib/deployment/services";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Website Launch",
+};
+
 export default async function WebsiteLaunchPage({
   params,
 }: {

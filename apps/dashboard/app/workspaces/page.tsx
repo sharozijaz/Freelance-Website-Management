@@ -3,6 +3,10 @@ import { listAccessibleOrganizations } from "@agency/auth/organizations";
 import { getDashboardSessionContext } from "@/lib/session";
 import { database } from "@/lib/auth";
 
+export const metadata = {
+  title: "Workspaces",
+};
+
 export default async function WorkspacesPage({
   searchParams,
 }: {

@@ -37,6 +37,10 @@ function deploymentDuration(startedAt: Date | null, completedAt: Date | null) {
   return `${Math.round(seconds / 60).toString()}m`;
 }
 
+export const metadata = {
+  title: "Website Deployments",
+};
+
 export default async function WebsiteDeploymentsPage({
   params,
 }: {

@@ -10,6 +10,10 @@ import { parseDashboardSearchParams } from "@/lib/dashboard/filters";
 import { getDomains } from "@/lib/deployment/services";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "Domains",
+};
+
 export default async function DomainsPage({
   searchParams,
 }: {

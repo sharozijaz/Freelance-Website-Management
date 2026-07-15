@@ -10,6 +10,10 @@ import { createDashboardRequest } from "@/lib/dashboard/access";
 import { getWebsiteDetail } from "@/lib/dashboard/projects";
 import { getDashboardSessionContext } from "@/lib/session";
 
+export const metadata = {
+  title: "New Blog Post",
+};
+
 export default async function NewBlogPostPage({
   params,
   searchParams,
