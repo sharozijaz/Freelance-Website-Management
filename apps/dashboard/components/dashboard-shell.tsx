@@ -141,8 +141,10 @@ export function DashboardShell({
         return;
       }
 
-      if (url.origin === window.location.origin && url.pathname !== window.location.pathname) {
+      if (url.origin === window.location.origin && url.href !== window.location.href) {
+        event.preventDefault();
         setIsNavigating(true);
+        window.location.assign(url.href);
       }
     }
 
