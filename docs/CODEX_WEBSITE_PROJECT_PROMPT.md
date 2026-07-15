@@ -18,6 +18,14 @@ Platform rules:
 - If the site needs SEO metadata managed by the agency/client, use the Sharoz SEO module.
 - If the site needs ecommerce, menu ordering, products, bookings, or customers, check whether the Sharoz module exists before creating a site-local backend.
 
+Blog rendering requirements:
+- Sharoz Blog content is returned as portable Markdown: `post.content.format === "markdown"` and `post.content.markdown`.
+- Do not print Markdown directly as plain text.
+- Render Markdown safely into styled article HTML/React using a proven Markdown renderer such as `react-markdown` plus safe plugins where needed.
+- Style headings, paragraphs, lists, links, quotes, dividers, inline code, bold, italic, strike, and images so dashboard-authored posts look polished on the public site.
+- Render `featuredMedia` as the article hero/cover image when present.
+- Keep public presentation in the custom website; do not ask the platform to return React components or page layout.
+
 Website identity:
 - Ask for the Sharoz website ID, environment, and API credentials before wiring platform data.
 - Never hardcode API secrets in frontend code.

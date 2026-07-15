@@ -245,6 +245,8 @@ The SDK returns the structured content unchanged.
 
 Custom websites choose their own Markdown renderer and must render user-authored Markdown safely.
 
+Connected websites must not print `post.content.markdown` directly as plain text. They should parse Markdown into styled article UI using the website's own design system. At minimum, public websites should style headings, paragraphs, ordered and unordered lists, links, blockquotes, dividers, inline code, bold, italic, strike, and images. Featured media should be rendered separately as the article hero or cover image when present.
+
 ## Featured Media
 
 Featured media is nullable.
