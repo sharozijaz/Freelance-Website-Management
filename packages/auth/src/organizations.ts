@@ -405,6 +405,70 @@ export async function archiveOrganization({
   return updated;
 }
 
+export async function permanentlyDeleteOrganization({
+  confirmation,
+  context,
+  database,
+  organizationId,
+}: {
+  confirmation: string;
+  context: SessionContext;
+  database: Database;
+  organizationId: string;
+}) {
+  if (!hasAgencyAdminAccess(context)) {
+    throw new PermissionDeniedError("Only agency users can permanently delete client workspaces.");
+  }
+
+  if (context.activeOrganizationId === organizationId) {
+    throw new OrganizationValidationError(
+      "Switch to another workspace before permanently deleting this client.",
+    );
+  }
+
+  const organization = await database.query.organizations.findFirst({
+    where: eq(organizations.id, organizationId),
+  });
+
+  if (!organization) {
+    throw new OrganizationValidationError("Client workspace was not found.");
+  }
+
+  if (organization.status !== "archived" || !organization.deletedAt) {
+    throw new OrganizationValidationError("Archive this client before permanently deleting it.");
+  }
+
+  const normalizedConfirmation = confirmation.trim();
+  if (
+    normalizedConfirmation !== organization.slug &&
+    normalizedConfirmation !== organization.name
+  ) {
+    throw new OrganizationValidationError(
+      `Type "${organization.slug}" to permanently delete this client.`,
+    );
+  }
+
+  const [activeCount] = await database
+    .select({ value: count() })
+    .from(organizations)
+    .where(and(eq(organizations.status, "active"), isNull(organizations.deletedAt)));
+
+  if (!activeCount || activeCount.value < 1) {
+    throw new OrganizationValidationError("Cannot delete the final active workspace.");
+  }
+
+  const [deleted] = await database
+    .delete(organizations)
+    .where(eq(organizations.id, organization.id))
+    .returning({ id: organizations.id });
+
+  if (!deleted) {
+    throw new OrganizationValidationError("Client workspace could not be permanently deleted.");
+  }
+
+  return deleted;
+}
+
 export async function switchActiveOrganization({
   context,
   database,

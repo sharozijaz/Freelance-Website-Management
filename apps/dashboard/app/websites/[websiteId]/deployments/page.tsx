@@ -96,20 +96,15 @@ export default async function WebsiteDeploymentsPage({
 
   return (
     <DashboardPage
-      actions={
-        <>
-          <Button asChild size="sm" variant="outline">
-            <Link href={`/websites/${websiteId}`}>Website</Link>
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <Link href={`/websites/${websiteId}/hosting`}>Hosting</Link>
-          </Button>
-        </>
-      }
       description="Website-scoped release history across staging and production environments."
       title={`${hosting.website.name} Deployments`}
     >
-      <WebsiteNavigation active="deployments" productionUrl={hosting.website.productionUrl} websiteId={websiteId} />
+      <WebsiteNavigation
+        active="deployments"
+        productionUrl={hosting.website.productionUrl}
+        websiteId={websiteId}
+        websiteName={hosting.website.name}
+      />
 
       <Card>
         <CardHeader className="p-4">

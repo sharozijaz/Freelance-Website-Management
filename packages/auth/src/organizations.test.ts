@@ -7,6 +7,7 @@ import {
   hasAgencyOwnerAccess,
   normalizeOrganizationSlug,
   OrganizationValidationError,
+  permanentlyDeleteOrganization,
 } from "./organizations";
 import type { OrganizationMembership, SessionContext } from "./types";
 
@@ -79,5 +80,78 @@ describe("organization workspace authorization", () => {
 
     expect(first).not.toBe(second);
     expect(first.length).toBeGreaterThan(32);
+  });
+
+  it("permanently deletes archived client organizations after confirmation", async () => {
+    const database = {
+      delete: () => ({
+        where: () => ({
+          returning: () => Promise.resolve([{ id: "client_1" }]),
+        }),
+      }),
+      query: {
+        organizations: {
+          findFirst: () =>
+            Promise.resolve({
+              deletedAt: new Date(),
+              id: "client_1",
+              name: "Client One",
+              slug: "client-one",
+              status: "archived",
+            }),
+        },
+      },
+      select: () => ({
+        from: () => ({
+          where: () => Promise.resolve([{ value: 1 }]),
+        }),
+      }),
+    };
+
+    await expect(
+      permanentlyDeleteOrganization({
+        confirmation: "client-one",
+        context: { ...context("agency_owner"), activeOrganizationId: "agency_1" },
+        database: database as never,
+        organizationId: "client_1",
+      }),
+    ).resolves.toEqual({ id: "client_1" });
+  });
+
+  it("blocks permanent deletion of the active workspace", async () => {
+    await expect(
+      permanentlyDeleteOrganization({
+        confirmation: "client-one",
+        context: context("agency_owner"),
+        database: {} as never,
+        organizationId: "org_1",
+      }),
+    ).rejects.toThrow(OrganizationValidationError);
+  });
+
+  it("requires archived status before permanent deletion", async () => {
+    const database = {
+      query: {
+        organizations: {
+          findFirst: () =>
+            Promise.resolve({
+              deletedAt: null,
+              id: "client_1",
+              name: "Client One",
+              slug: "client-one",
+              status: "active",
+            }),
+        },
+      },
+    };
+
+    await expect(
+      permanentlyDeleteOrganization({
+        confirmation: "client-one",
+        context: { ...context("agency_owner"), activeOrganizationId: "agency_1" },
+        database: database as never,
+        organizationId: "client_1",
+      }),
+    ).rejects.toThrow(OrganizationValidationError);
   });
 });

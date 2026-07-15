@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Badge, Button, Card, CardContent } from "@agency/ui";
+import { Badge, Card, CardContent } from "@agency/ui";
 import { websiteTypeLabels } from "@agency/lib/modules";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
@@ -40,15 +39,15 @@ export default async function WebsiteDeveloperPage({
 
   return (
     <DashboardPage
-      actions={
-        <Button asChild size="sm" variant="outline">
-          <Link href={`/websites/${website.id}`}>Back to Website</Link>
-        </Button>
-      }
       description="Server credentials for future Platform API and SDK access."
       title={`${website.name} Developer`}
     >
-      <WebsiteNavigation active="developer" productionUrl={website.productionUrl} websiteId={website.id} />
+      <WebsiteNavigation
+        active="developer"
+        productionUrl={website.productionUrl}
+        websiteId={website.id}
+        websiteName={website.name}
+      />
 
       <Card>
         <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">

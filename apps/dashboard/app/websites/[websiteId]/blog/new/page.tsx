@@ -51,7 +51,12 @@ export default async function NewBlogPostPage({
       description="Create article content. Presentation remains in the custom website."
       title={`New Post for ${detail.website.name}`}
     >
-      <WebsiteNavigation active="blog" productionUrl={detail.website.productionUrl} websiteId={websiteId} />
+      <WebsiteNavigation
+        active="blog"
+        productionUrl={detail.website.productionUrl}
+        websiteId={websiteId}
+        websiteName={detail.website.name}
+      />
 
       <BlogPostForm
         action={`/api/websites/${websiteId}/blog/posts`}

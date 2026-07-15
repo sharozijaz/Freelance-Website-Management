@@ -48,7 +48,12 @@ export default async function BlogCategoriesPage({
       description="Blog categories belong only to this website's Blog domain."
       title={`${detail.website.name} Blog Categories`}
     >
-      <WebsiteNavigation active="blog" productionUrl={detail.website.productionUrl} websiteId={websiteId} />
+      <WebsiteNavigation
+        active="blog"
+        productionUrl={detail.website.productionUrl}
+        websiteId={websiteId}
+        websiteName={detail.website.name}
+      />
 
       {typeof query.error === "string" ? (
         <Card className="border-error">

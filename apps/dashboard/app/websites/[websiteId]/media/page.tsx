@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -75,15 +74,15 @@ export default async function WebsiteMediaPage({
     if (error instanceof MediaDomainError) {
       return (
         <DashboardPage
-          actions={
-            <Button asChild size="sm" variant="outline">
-              <Link href={`/websites/${websiteId}`}>Back to Website</Link>
-            </Button>
-          }
           description="Enable the Media module before managing website media."
           title={`${detail.website.name} Media`}
         >
-          <WebsiteNavigation active="media" productionUrl={detail.website.productionUrl} websiteId={websiteId} />
+          <WebsiteNavigation
+            active="media"
+            productionUrl={detail.website.productionUrl}
+            websiteId={websiteId}
+            websiteName={detail.website.name}
+          />
 
           <EmptyState description={error.message} title="Media unavailable" />
         </DashboardPage>
@@ -180,15 +179,15 @@ export default async function WebsiteMediaPage({
 
   return (
     <DashboardPage
-      actions={
-        <Button asChild size="sm" variant="outline">
-          <Link href={`/websites/${websiteId}`}>Back to Website</Link>
-        </Button>
-      }
       description="Register externally stored public media for this connected website."
       title={`${detail.website.name} Media`}
     >
-      <WebsiteNavigation active="media" productionUrl={detail.website.productionUrl} websiteId={websiteId} />
+      <WebsiteNavigation
+        active="media"
+        productionUrl={detail.website.productionUrl}
+        websiteId={websiteId}
+        websiteName={detail.website.name}
+      />
 
       {errorMessage(query.error) ? (
         <Card className="border-error">

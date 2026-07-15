@@ -22,6 +22,16 @@ describe("dashboard SEO actions", () => {
     ).toBe("/websites/website_123/media");
   });
 
+  it("routes website SEO findings to the website SEO settings screen", () => {
+    expect(
+      getSeoActionHref({
+        resourceId: "website_123",
+        resourceType: "website",
+        websiteId: "website_123",
+      }),
+    ).toBe("/websites/website_123/seo");
+  });
+
   it("routes legacy page SEO findings to website review", () => {
     expect(
       getSeoActionHref({

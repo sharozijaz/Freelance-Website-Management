@@ -152,6 +152,7 @@ function SeoFilters({
         name="resourceType"
       >
         <option value="all">All resources</option>
+        <option value="website">Website settings</option>
         <option value="page">Pages</option>
         <option value="post">Posts</option>
         <option value="media">Media</option>
@@ -201,7 +202,7 @@ function FindingsList({
             {finding.resourceType} · {finding.ruleId}
           </span>
           <Button asChild size="sm" variant="outline">
-            <Link href={finding.actionHref}>Review</Link>
+            <Link href={finding.actionHref ?? `/websites/${finding.websiteId}/seo`}>Review</Link>
           </Button>
         </article>
       ))}

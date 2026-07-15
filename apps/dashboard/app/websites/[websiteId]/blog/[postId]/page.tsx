@@ -50,7 +50,12 @@ export default async function EditBlogPostPage({
       description="Edit article data. The connected website decides how this post is rendered."
       title={post.title}
     >
-      <WebsiteNavigation active="blog" websiteId={websiteId} />
+      <WebsiteNavigation
+        active="blog"
+        productionUrl={post.website.productionUrl}
+        websiteId={websiteId}
+        websiteName={post.website.name}
+      />
 
       <BlogPostForm
         action={`/api/blog/posts/${post.id}`}

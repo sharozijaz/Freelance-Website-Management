@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { Button } from "@agency/ui";
+import { DashboardBreadcrumbs } from "./dashboard-breadcrumbs";
 
 type WebsiteNavigationItem =
   | "overview"
@@ -42,29 +44,49 @@ const websiteNavigationItems: {
   { href: (websiteId) => `/websites/${websiteId}/seo`, key: "seo", label: "SEO" },
 ];
 
+const websiteNavigationLabels = new Map(
+  websiteNavigationItems.map((item) => [item.key, item.label] as const),
+);
+
 export function WebsiteNavigation({
   active,
   productionUrl,
+  websiteName = "Website",
   websiteId,
 }: {
   active: WebsiteNavigationItem;
   productionUrl?: string | null;
+  websiteName?: string | null;
   websiteId: string;
 }) {
   return (
     <nav
       aria-label="Website sections"
-      className="rounded-lg border border-border bg-card p-3 shadow-sm"
+      className="space-y-3 rounded-lg border border-border bg-card p-3 shadow-sm"
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <Button asChild size="sm" variant="outline">
-          <Link href="/websites">All Websites</Link>
-        </Button>
-        {productionUrl ? (
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <DashboardBreadcrumbs
+          items={[
+            { href: "/websites", label: "Websites" },
+            { href: `/websites/${websiteId}`, label: websiteName ?? "Website" },
+            { label: websiteNavigationLabels.get(active) ?? "Overview" },
+          ]}
+        />
+        <div className="flex flex-wrap gap-2">
           <Button asChild size="sm" variant="outline">
-            <a href={productionUrl}>Open Public Site</a>
+            <Link href="/websites">All Websites</Link>
           </Button>
-        ) : null}
+          {productionUrl ? (
+            <Button asChild size="sm" variant="outline">
+              <a href={productionUrl} rel="noreferrer" target="_blank">
+                Open Public Site
+                <ExternalLink aria-hidden className="size-3.5" />
+              </a>
+            </Button>
+          ) : null}
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
         {websiteNavigationItems.map((item) => (
           <Button
             asChild

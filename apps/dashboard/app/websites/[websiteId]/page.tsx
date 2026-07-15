@@ -53,7 +53,12 @@ export default async function WebsiteDetailPage({
       description="Website identity, delivery context, content operations, and activity."
       title={website.name}
     >
-      <WebsiteNavigation active="overview" productionUrl={website.productionUrl} websiteId={website.id} />
+      <WebsiteNavigation
+        active="overview"
+        productionUrl={website.productionUrl}
+        websiteId={website.id}
+        websiteName={website.name}
+      />
 
       <section className="grid gap-4 xl:grid-cols-3">
         <InfoCard label="Client" value={website.organization.name} />

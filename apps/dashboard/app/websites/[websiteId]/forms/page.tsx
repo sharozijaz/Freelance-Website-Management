@@ -50,15 +50,15 @@ export default async function WebsiteFormsPage({
 
   return (
     <DashboardPage
-      actions={
-        <Button asChild size="sm" variant="outline">
-          <Link href={`/websites/${websiteId}`}>Back to Website</Link>
-        </Button>
-      }
       description="Website-scoped public form definitions for connected websites."
       title={`Forms for ${detail.website.name}`}
     >
-      <WebsiteNavigation active="forms" productionUrl={detail.website.productionUrl} websiteId={websiteId} />
+      <WebsiteNavigation
+        active="forms"
+        productionUrl={detail.website.productionUrl}
+        websiteId={websiteId}
+        websiteName={detail.website.name}
+      />
 
       <Card>
         <CardHeader className="p-4">

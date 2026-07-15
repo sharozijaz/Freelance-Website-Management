@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
@@ -73,15 +72,15 @@ export default async function WebsiteEnvironmentsPage({
 
   return (
     <DashboardPage
-      actions={
-        <Button asChild size="sm" variant="outline">
-          <Link href={`/websites/${website.id}`}>Back to Website</Link>
-        </Button>
-      }
       description="Runtime boundaries for staging review and production launch."
       title={`${website.name} Environments`}
     >
-      <WebsiteNavigation active="environments" productionUrl={website.productionUrl} websiteId={website.id} />
+      <WebsiteNavigation
+        active="environments"
+        productionUrl={website.productionUrl}
+        websiteId={website.id}
+        websiteName={website.name}
+      />
 
       <section className="grid gap-4 xl:grid-cols-2">
         {environments.map((environment) => (

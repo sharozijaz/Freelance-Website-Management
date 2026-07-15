@@ -48,8 +48,10 @@ export default async function ClientsPage({
     );
   }
 
-  const params = parseDashboardSearchParams(await searchParams);
+  const rawSearchParams = await searchParams;
+  const params = parseDashboardSearchParams(rawSearchParams);
   const clients = await getClients({ database, params, request });
+  const error = typeof rawSearchParams.error === "string" ? rawSearchParams.error : null;
 
   return (
     <DashboardPage
@@ -62,6 +64,12 @@ export default async function ClientsPage({
         defaultStatus={params.status}
         statuses={["active", "suspended", "archived"]}
       />
+
+      {error ? (
+        <Card>
+          <CardContent className="p-4 text-sm text-error">{error}</CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader className="p-4">
@@ -126,37 +134,82 @@ export default async function ClientsPage({
               <span className="text-sm text-muted-foreground">
                 {formatDashboardDate(client.lastActivityAt, "No activity")}
               </span>
-              <div className="flex flex-wrap gap-2">
-                <form action="/api/workspaces/switch" method="post">
-                  <input name="organizationId" type="hidden" value={client.id} />
-                  <input name="returnTo" type="hidden" value={`/clients/${client.id}`} />
-                  <Button size="sm" type="submit">
-                    Open
-                  </Button>
-                </form>
-                <Button asChild size="sm" variant="ghost">
-                  <Link href={`/clients/${client.id}`}>
-                    <ArrowRight className="size-4" />
-                  </Link>
-                </Button>
-                {client.id === request.access.activeOrganizationId ? (
-                  <Button disabled size="sm" variant="outline">
-                    Active
-                  </Button>
-                ) : (
-                  <form action={`/api/workspaces/${client.id}`} method="post">
-                    <input name="action" type="hidden" value="archive" />
-                    <input name="returnTo" type="hidden" value="/clients" />
-                    <Button size="sm" type="submit" variant="destructive">
-                      Archive
-                    </Button>
-                  </form>
-                )}
-              </div>
+              <ClientActions
+                activeOrganizationId={request.access.activeOrganizationId}
+                clientId={client.id}
+                clientSlug={client.slug}
+                status={client.status}
+              />
             </div>
           ))}
         </div>
       )}
     </DashboardPage>
+  );
+}
+
+function ClientActions({
+  activeOrganizationId,
+  clientId,
+  clientSlug,
+  status,
+}: {
+  activeOrganizationId?: string | null;
+  clientId: string;
+  clientSlug: string;
+  status: string;
+}) {
+  if (status === "archived") {
+    return (
+      <div className="flex flex-col gap-2">
+        <p className="max-w-72 text-xs text-muted-foreground">
+          Archive hides the client. Permanent delete removes client data and cannot be undone.
+        </p>
+        <form action={`/api/workspaces/${clientId}`} className="flex flex-wrap gap-2" method="post">
+          <input name="action" type="hidden" value="delete" />
+          <input name="returnTo" type="hidden" value="/clients?status=archived" />
+          <Input
+            aria-label={`Type ${clientSlug} to permanently delete`}
+            className="h-8 w-44"
+            name="confirmation"
+            placeholder={`Type ${clientSlug}`}
+            required
+          />
+          <Button size="sm" type="submit" variant="destructive">
+            Delete permanently
+          </Button>
+        </form>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      <form action="/api/workspaces/switch" method="post">
+        <input name="organizationId" type="hidden" value={clientId} />
+        <input name="returnTo" type="hidden" value={`/clients/${clientId}`} />
+        <Button size="sm" type="submit">
+          Open
+        </Button>
+      </form>
+      <Button asChild size="sm" variant="ghost">
+        <Link href={`/clients/${clientId}`}>
+          <ArrowRight className="size-4" />
+        </Link>
+      </Button>
+      {clientId === activeOrganizationId ? (
+        <Button disabled size="sm" variant="outline">
+          Active
+        </Button>
+      ) : (
+        <form action={`/api/workspaces/${clientId}`} method="post">
+          <input name="action" type="hidden" value="archive" />
+          <input name="returnTo" type="hidden" value="/clients" />
+          <Button size="sm" type="submit" variant="destructive">
+            Archive
+          </Button>
+        </form>
+      )}
+    </div>
   );
 }

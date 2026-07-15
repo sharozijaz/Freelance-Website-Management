@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
-import { archiveOrganization } from "@agency/auth/organizations";
+import { archiveOrganization, permanentlyDeleteOrganization } from "@agency/auth/organizations";
 import { database } from "@/lib/auth";
+import { revalidateDashboardOverview } from "@/lib/dashboard/revalidation";
 import { toSafeErrorMessage } from "@/lib/errors";
 import { requireDashboardSessionContext } from "@/lib/session";
 
@@ -23,21 +24,32 @@ export async function POST(
     returnTo = submittedReturnTo?.startsWith("/") ? submittedReturnTo : returnTo;
     const action = value(formData, "action");
 
-    if (action !== "archive") {
+    if (action !== "archive" && action !== "delete") {
       throw new Error("Unsupported workspace action.");
     }
 
     const { organizationId } = await params;
 
     if (context.activeOrganizationId === organizationId) {
-      throw new Error("Switch to another workspace before archiving the active one.");
+      throw new Error("Switch to another workspace before changing the active one.");
     }
 
-    await archiveOrganization({
-      context,
-      database,
-      organizationId,
-    });
+    if (action === "archive") {
+      await archiveOrganization({
+        context,
+        database,
+        organizationId,
+      });
+    } else {
+      await permanentlyDeleteOrganization({
+        confirmation: value(formData, "confirmation") ?? "",
+        context,
+        database,
+        organizationId,
+      });
+    }
+
+    revalidateDashboardOverview();
   } catch (error) {
     const message = toSafeErrorMessage(error, "Workspace could not be updated.");
     redirect(`${returnTo}?error=${encodeURIComponent(message)}`);

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileText, Tags } from "lucide-react";
+import { FileText } from "lucide-react";
 import { Badge, Button, Card, CardContent, EmptyState } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
@@ -69,7 +69,12 @@ export default async function BlogPostsPage({
       description="Manage article data for this connected website. The public website owns presentation."
       title={`${detail.website.name} Blog`}
     >
-      <WebsiteNavigation active="blog" productionUrl={detail.website.productionUrl} websiteId={websiteId} />
+      <WebsiteNavigation
+        active="blog"
+        productionUrl={detail.website.productionUrl}
+        websiteId={websiteId}
+        websiteName={detail.website.name}
+      />
 
       {error ? (
         <Card className="border-error">
@@ -128,17 +133,6 @@ export default async function BlogPostsPage({
               </div>
             ))
           )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="flex flex-wrap gap-3 p-4">
-          <Button asChild size="sm" variant="ghost">
-            <Link href={`/websites/${websiteId}`}>
-              <Tags className="size-4" />
-              Back to Website
-            </Link>
-          </Button>
         </CardContent>
       </Card>
     </DashboardPage>

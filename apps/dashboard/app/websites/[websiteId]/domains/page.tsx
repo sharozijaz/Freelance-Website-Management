@@ -132,20 +132,15 @@ export default async function WebsiteDomainsPage({
 
   return (
     <DashboardPage
-      actions={
-        <>
-          <Button asChild size="sm" variant="outline">
-            <Link href={`/websites/${websiteId}/hosting`}>Hosting</Link>
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <Link href={`/websites/${websiteId}/launch`}>Launch</Link>
-          </Button>
-        </>
-      }
       description="Track which hostnames belong to staging or production. This does not buy or register domains; it records and verifies domains you already control."
       title={`${domainState.website.name} Domains`}
     >
-      <WebsiteNavigation active="domains" productionUrl={domainState.website.productionUrl} websiteId={websiteId} />
+      <WebsiteNavigation
+        active="domains"
+        productionUrl={domainState.website.productionUrl}
+        websiteId={websiteId}
+        websiteName={domainState.website.name}
+      />
 
       <Card>
         <CardHeader className="p-4">

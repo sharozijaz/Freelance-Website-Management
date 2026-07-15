@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { AlertTriangle, CheckCircle2, CircleAlert } from "lucide-react";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState } from "@agency/ui";
@@ -57,23 +56,15 @@ export default async function WebsiteLaunchPage({
 
   return (
     <DashboardPage
-      actions={
-        <>
-          <Button asChild size="sm" variant="outline">
-            <Link href={`/websites/${websiteId}/domains`}>Domains</Link>
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <Link href={`/websites/${websiteId}/deployments`}>Deployments</Link>
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <Link href={`/websites/${websiteId}/hosting`}>Hosting</Link>
-          </Button>
-        </>
-      }
       description="A final launch checklist for marking the website live after domain, SSL, deployment, and production URL are ready."
       title={`${readiness.website.name} Launch`}
     >
-      <WebsiteNavigation active="launch" productionUrl={readiness.website.productionUrl} websiteId={websiteId} />
+      <WebsiteNavigation
+        active="launch"
+        productionUrl={readiness.website.productionUrl}
+        websiteId={websiteId}
+        websiteName={readiness.website.name}
+      />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Info

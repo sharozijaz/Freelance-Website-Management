@@ -142,22 +142,15 @@ export default async function WebsiteHostingPage({
 
   return (
     <DashboardPage
-      actions={
-        <>
-          <Button asChild size="sm" variant="outline">
-            <Link href={`/websites/${websiteId}`}>Website</Link>
-          </Button>
-          {hosting.website.productionUrl ? (
-            <Button asChild size="sm">
-              <a href={hosting.website.productionUrl}>Open Live Site</a>
-            </Button>
-          ) : null}
-        </>
-      }
       description="Record where this site is hosted, what URL is live, and the deployment events you want to track for the client."
       title={`${hosting.website.name} Hosting`}
     >
-      <WebsiteNavigation active="hosting" productionUrl={hosting.website.productionUrl} websiteId={websiteId} />
+      <WebsiteNavigation
+        active="hosting"
+        productionUrl={hosting.website.productionUrl}
+        websiteId={websiteId}
+        websiteName={hosting.website.name}
+      />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Info

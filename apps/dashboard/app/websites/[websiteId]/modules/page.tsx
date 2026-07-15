@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Blocks, Lock } from "lucide-react";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState } from "@agency/ui";
 import { websiteTypeLabels } from "@agency/lib/modules";
@@ -44,15 +43,15 @@ export default async function WebsiteModulesPage({
 
   return (
     <DashboardPage
-      actions={
-        <Button asChild size="sm" variant="outline">
-          <Link href={`/websites/${website.id}`}>Back to Website</Link>
-        </Button>
-      }
       description="Enable backend capabilities for this website. A custom site can then use the Platform API for only the modules this client needs."
       title={`${website.name} Modules`}
     >
-      <WebsiteNavigation active="modules" productionUrl={website.productionUrl} websiteId={website.id} />
+      <WebsiteNavigation
+        active="modules"
+        productionUrl={website.productionUrl}
+        websiteId={website.id}
+        websiteName={website.name}
+      />
 
       {error ? (
         <Card className="border-error">

@@ -48,7 +48,12 @@ export default async function BlogTagsPage({
       description="Blog tags are explicit Blog records, not global platform taxonomies."
       title={`${detail.website.name} Blog Tags`}
     >
-      <WebsiteNavigation active="blog" productionUrl={detail.website.productionUrl} websiteId={websiteId} />
+      <WebsiteNavigation
+        active="blog"
+        productionUrl={detail.website.productionUrl}
+        websiteId={websiteId}
+        websiteName={detail.website.name}
+      />
 
       {typeof query.error === "string" ? (
         <Card className="border-error">

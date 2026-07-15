@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, ilike, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import type { createDatabaseClient } from "@agency/database";
 import {
   auditLogs,
@@ -186,10 +186,15 @@ export async function getClients({
 }) {
   assertAgencyOperationsAccess(request);
   const { limit, offset } = getPagination(params);
+  const statusCondition =
+    params.status === "archived"
+      ? and(eq(organizations.status, "archived"), isNotNull(organizations.deletedAt))
+      : params.status !== "all"
+        ? and(eq(organizations.status, params.status as "active"), isNull(organizations.deletedAt))
+        : isNull(organizations.deletedAt);
   const conditions = [
-    isNull(organizations.deletedAt),
+    statusCondition,
     organizationScopeCondition(request),
-    params.status !== "all" ? eq(organizations.status, params.status as "active") : undefined,
     params.query ? ilike(organizations.name, `%${params.query}%`) : undefined,
   ].filter(Boolean);
 

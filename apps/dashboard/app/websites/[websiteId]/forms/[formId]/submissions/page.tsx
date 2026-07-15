@@ -44,15 +44,14 @@ export default async function WebsiteFormSubmissionsPage({
 
   return (
     <DashboardPage
-      actions={
-        <Button asChild size="sm" variant="outline">
-          <Link href={`/websites/${websiteId}/forms`}>Back to Forms</Link>
-        </Button>
-      }
       description="Website-scoped submission inbox. Values open on the protected text-only detail view."
       title="Form Submissions"
     >
-      <WebsiteNavigation active="forms" websiteId={websiteId} />
+      <WebsiteNavigation
+        active="forms"
+        websiteId={websiteId}
+        websiteName={submissions.items[0]?.websiteName ?? null}
+      />
 
       {submissions.items.length === 0 ? (
         <EmptyState

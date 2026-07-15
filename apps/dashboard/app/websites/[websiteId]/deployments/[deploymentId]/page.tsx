@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
@@ -77,21 +76,21 @@ export default async function WebsiteDeploymentDetailPage({
   return (
     <DashboardPage
       actions={
-        <>
-          {deployment.deploymentUrl ? (
-            <Button asChild size="sm" variant="outline">
-              <a href={deployment.deploymentUrl}>Open Deployment</a>
-            </Button>
-          ) : null}
+        deployment.deploymentUrl ? (
           <Button asChild size="sm" variant="outline">
-            <Link href={`/websites/${websiteId}/deployments`}>Deployments</Link>
+            <a href={deployment.deploymentUrl}>Open Deployment</a>
           </Button>
-        </>
+        ) : null
       }
       description="Website-scoped deployment detail and lifecycle controls."
       title={deployment.website.name}
     >
-      <WebsiteNavigation active="deployments" websiteId={websiteId} />
+      <WebsiteNavigation
+        active="deployments"
+        productionUrl={deployment.website.productionUrl}
+        websiteId={websiteId}
+        websiteName={deployment.website.name}
+      />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Info label="Provider" value={deployment.provider} />
