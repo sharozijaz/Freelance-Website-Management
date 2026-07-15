@@ -123,9 +123,27 @@ The page fetches the public Contact form server-side, renders safe fields, and s
 Existing dashboard Forms screens remain available, and Milestone 10 adds website-scoped paths:
 
 - `/websites/[websiteId]/forms`
+- `/websites/[websiteId]/forms/[formId]`
 - `/websites/[websiteId]/forms/[formId]/submissions`
 
 Submission values are rendered as text only on the protected submission detail screen.
+
+## Planned Custom Form Builder
+
+The current dashboard form builder is a foundation. The next Forms milestone should replace the fragile manual field-definition textarea as the primary workflow with a click-based custom form builder.
+
+Templates such as Contact and Catering are shortcuts only. They must not limit the kinds of businesses the platform can support.
+
+The builder should support:
+
+- add, remove, duplicate, and reorder fields
+- reusable field types: text, email, phone, textarea, number, date, time, select, radio, checkbox, consent, hidden, and future file upload
+- per-field label, machine name, required toggle, placeholder, help text, option list, and validation settings
+- template shortcuts for Contact, Quote Request, Booking Request, Catering/Event, Service Inquiry, Newsletter, Support Request, and Blank Custom Form
+- preview of the public field contract before saving
+- advanced text syntax/import mode as a fallback for power users, not the default experience
+
+Connected websites may either render forms dynamically from the Platform API response or use a custom-coded visual form that submits matching field names. Either way, the field names must match the saved platform form definition exactly.
 
 ## Demo Seed
 

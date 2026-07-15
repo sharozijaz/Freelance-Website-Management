@@ -234,6 +234,25 @@ export default async function ProjectDetailPage({
           </CardContent>
         </Card>
       </section>
+
+      <Card>
+        <CardHeader className="p-4">
+          <CardTitle className="text-base text-error">Project Archive</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 p-4 pt-0">
+          <p className="text-sm text-muted-foreground">
+            Archive hides this project from active project lists. Use this when a client contract,
+            cancelled delivery, or old test project no longer belongs in day-to-day operations.
+          </p>
+          <form action={`/api/projects/${project.id}`} method="post">
+            <input name="action" type="hidden" value="archive" />
+            <input name="returnTo" type="hidden" value="/projects" />
+            <Button size="sm" type="submit" variant="destructive">
+              Archive Project
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </DashboardPage>
   );
 }

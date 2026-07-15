@@ -144,7 +144,7 @@ export default async function ProjectsPage({
             <span>Status</span>
             <span>Target</span>
             <span>Website</span>
-            <span>Open</span>
+            <span>Actions</span>
           </div>
           {projects.items.map((project) => (
             <div
@@ -173,9 +173,18 @@ export default async function ProjectsPage({
               <span className="text-sm text-muted-foreground">
                 {project.websiteName ?? "Not connected"}
               </span>
-              <Button asChild size="sm" variant="outline">
-                <Link href={`/projects/${project.id}`}>Open</Link>
-              </Button>
+              <div className="flex flex-wrap gap-2 md:justify-end">
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/projects/${project.id}`}>Open</Link>
+                </Button>
+                <form action={`/api/projects/${project.id}`} method="post">
+                  <input name="action" type="hidden" value="archive" />
+                  <input name="returnTo" type="hidden" value="/projects" />
+                  <Button size="sm" type="submit" variant="destructive">
+                    Archive
+                  </Button>
+                </form>
+              </div>
             </div>
           ))}
         </div>

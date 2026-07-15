@@ -23,6 +23,11 @@ function dateValue(value: string | null) {
   return value ? new Date(`${value}T00:00:00.000Z`) : null;
 }
 
+function appendError(returnTo: string, message: string) {
+  const separator = returnTo.includes("?") ? "&" : "?";
+  return `${returnTo}${separator}error=${encodeURIComponent(message)}`;
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ projectId: string }> },
@@ -72,7 +77,7 @@ export async function POST(
     revalidateProjectWorkspace(projectId);
   } catch (error) {
     const message = toSafeErrorMessage(error, "Project could not be updated.");
-    redirect(`${returnTo}?error=${encodeURIComponent(message)}`);
+    redirect(appendError(returnTo, message));
   }
 
   redirect(returnTo);

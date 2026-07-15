@@ -161,6 +161,25 @@ function scopedOrganizationCondition(request: DashboardRequest, column = project
   return inArray(column, ids);
 }
 
+function activeProjectOrganizationCondition(
+  request: DashboardRequest,
+  organizationId?: string,
+) {
+  const requestedOrganizationId =
+    organizationId ?? request.access.activeOrganizationId ?? undefined;
+  const ids = getScopedOrganizationIds(request);
+
+  if (requestedOrganizationId) {
+    if (ids !== null && !ids.includes(requestedOrganizationId)) {
+      return sql`false`;
+    }
+
+    return eq(projects.organizationId, requestedOrganizationId);
+  }
+
+  return scopedOrganizationCondition(request);
+}
+
 async function writeAudit({
   action,
   database,
@@ -633,6 +652,10 @@ export async function requireProjectAccess({
     throw new ProjectValidationError("Project was not found.");
   }
 
+  if (project.organization.deletedAt) {
+    throw new ProjectValidationError("Project was not found.");
+  }
+
   assertDashboardPermission(request, permission, project.organizationId);
   return project;
 }
@@ -713,9 +736,7 @@ export async function getProjects({
 }) {
   assertDashboardPermission(request, "projects:read", params.organizationId);
   const { limit, offset } = getPagination(params);
-  const orgCondition = params.organizationId
-    ? eq(projects.organizationId, params.organizationId)
-    : scopedOrganizationCondition(request);
+  const orgCondition = activeProjectOrganizationCondition(request, params.organizationId);
   const orderBy =
     params.sort === "launch_asc"
       ? asc(projects.launchTargetAt)
@@ -742,6 +763,7 @@ export async function getProjects({
     .where(
       and(
         isNull(projects.deletedAt),
+        isNull(organizations.deletedAt),
         orgCondition,
         params.status !== "all" ? eq(projects.status, params.status as ProjectStatus) : undefined,
         params.query ? ilike(projects.name, `%${params.query}%`) : undefined,

@@ -177,6 +177,9 @@ This section captures the current working direction so the project does not drif
    - Keep form slugs unique per website, not globally.
    - Provide clear create, edit, duplicate, archive, and permanent delete workflows.
    - Improve the field builder so common forms such as contact and catering do not require fragile manual field syntax.
+   - Build a real custom form builder UI. Templates should be shortcuts, not limits. Agency users should be able to add, remove, reorder, and configure fields for any business type without writing manual field-definition syntax.
+   - Support reusable field types such as text, email, phone, textarea, number, date, time, select, radio, checkbox, consent, hidden fields, and future file upload.
+   - Keep the advanced text syntax only as a fallback/import mode for power users and debugging.
    - Improve the submissions inbox with read/unread state, notes, export, and better filtering.
 
 4. Connected website integration documentation
@@ -334,6 +337,10 @@ Goal: let custom websites submit and manage form submissions through Sharoz Plat
 Scope:
 
 - form definitions
+- custom form builder with add/remove/reorder field controls
+- template shortcuts for Contact, Quote Request, Booking Request, Catering/Event, Service Inquiry, Newsletter, Support Request, and Blank Custom Form
+- field configuration for label, machine name, type, required state, placeholder, help text, options, and validation
+- advanced field syntax/import mode retained as a fallback, not the primary UX
 - public submission API
 - submissions inbox
 - status and notes
@@ -421,3 +428,17 @@ Dashboard content management
 -> custom-coded website
 -> client-managed updates
 ```
+
+## Client Data Isolation Direction
+
+Client users must only see data for their own organization. Projects, websites, content,
+forms, media, SEO, domains, deployments, and future business modules must always be scoped by
+organization before data is queried or rendered.
+
+Agency admins may access all clients, but the dashboard should prefer an explicit viewing scope:
+
+- `Agency overview` for cross-client operational summaries.
+- One selected client workspace for day-to-day client work.
+
+This keeps client privacy strict, reduces accidental cross-client confusion, and avoids loading
+large multi-client datasets when the admin is working on one client at a time.
