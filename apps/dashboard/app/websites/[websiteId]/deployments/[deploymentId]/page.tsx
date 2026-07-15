@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
+import { WebsiteNavigation } from "@/components/website-navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { formatDashboardDateTime } from "@/lib/dashboard/dates";
@@ -90,6 +91,8 @@ export default async function WebsiteDeploymentDetailPage({
       description="Website-scoped deployment detail and lifecycle controls."
       title={deployment.website.name}
     >
+      <WebsiteNavigation active="deployments" websiteId={websiteId} />
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Info label="Provider" value={deployment.provider} />
         <Info

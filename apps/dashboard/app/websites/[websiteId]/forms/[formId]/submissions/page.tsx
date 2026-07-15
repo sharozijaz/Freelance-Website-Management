@@ -3,6 +3,7 @@ import { Inbox } from "lucide-react";
 import { Badge, Button, EmptyState } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
+import { WebsiteNavigation } from "@/components/website-navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { getSubmissions } from "@/lib/dashboard/content-ops";
@@ -51,6 +52,8 @@ export default async function WebsiteFormSubmissionsPage({
       description="Website-scoped submission inbox. Values open on the protected text-only detail view."
       title="Form Submissions"
     >
+      <WebsiteNavigation active="forms" websiteId={websiteId} />
+
       {submissions.items.length === 0 ? (
         <EmptyState
           description="Connected website submissions for this form will appear here."

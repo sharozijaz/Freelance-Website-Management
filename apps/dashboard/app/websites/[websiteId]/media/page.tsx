@@ -14,6 +14,7 @@ import {
 } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
+import { WebsiteNavigation } from "@/components/website-navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { formatDashboardDateTime } from "@/lib/dashboard/dates";
@@ -82,6 +83,8 @@ export default async function WebsiteMediaPage({
           description="Enable the Media module before managing website media."
           title={`${detail.website.name} Media`}
         >
+          <WebsiteNavigation active="media" productionUrl={detail.website.productionUrl} websiteId={websiteId} />
+
           <EmptyState description={error.message} title="Media unavailable" />
         </DashboardPage>
       );
@@ -185,6 +188,8 @@ export default async function WebsiteMediaPage({
       description="Register externally stored public media for this connected website."
       title={`${detail.website.name} Media`}
     >
+      <WebsiteNavigation active="media" productionUrl={detail.website.productionUrl} websiteId={websiteId} />
+
       {errorMessage(query.error) ? (
         <Card className="border-error">
           <CardContent className="p-4 text-sm text-error">{errorMessage(query.error)}</CardContent>

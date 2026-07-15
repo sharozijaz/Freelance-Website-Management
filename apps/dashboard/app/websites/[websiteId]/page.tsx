@@ -14,6 +14,7 @@ import {
 import { websiteTypeDescriptions, websiteTypeLabels, websiteTypes } from "@agency/lib/modules";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
+import { WebsiteNavigation } from "@/components/website-navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { presentAuditLog } from "@/lib/dashboard/activity";
@@ -87,6 +88,8 @@ export default async function WebsiteDetailPage({
       description="Website identity, delivery context, content operations, and activity."
       title={website.name}
     >
+      <WebsiteNavigation active="overview" productionUrl={website.productionUrl} websiteId={website.id} />
+
       <section className="grid gap-4 xl:grid-cols-3">
         <InfoCard label="Client" value={website.organization.name} />
         <InfoCard label="Type" value={websiteTypeLabels[website.websiteType]} />

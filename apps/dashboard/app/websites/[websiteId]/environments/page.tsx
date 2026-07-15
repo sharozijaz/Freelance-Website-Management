@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
+import { WebsiteNavigation } from "@/components/website-navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { formatDashboardDateTime } from "@/lib/dashboard/dates";
@@ -80,6 +81,8 @@ export default async function WebsiteEnvironmentsPage({
       description="Runtime boundaries for staging review and production launch."
       title={`${website.name} Environments`}
     >
+      <WebsiteNavigation active="environments" productionUrl={website.productionUrl} websiteId={website.id} />
+
       <section className="grid gap-4 xl:grid-cols-2">
         {environments.map((environment) => (
           <Card key={environment.id}>

@@ -14,6 +14,7 @@ import {
 } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
+import { WebsiteNavigation } from "@/components/website-navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { formatDashboardDateTime } from "@/lib/dashboard/dates";
@@ -156,6 +157,8 @@ export default async function WebsiteHostingPage({
       description="Record where this site is hosted, what URL is live, and the deployment events you want to track for the client."
       title={`${hosting.website.name} Hosting`}
     >
+      <WebsiteNavigation active="hosting" productionUrl={hosting.website.productionUrl} websiteId={websiteId} />
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Info
           label="Deployment"

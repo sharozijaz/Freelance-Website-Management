@@ -4,6 +4,7 @@ import { AlertTriangle, CheckCircle2, CircleAlert } from "lucide-react";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
+import { WebsiteNavigation } from "@/components/website-navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { formatDashboardDateTime } from "@/lib/dashboard/dates";
@@ -72,6 +73,8 @@ export default async function WebsiteLaunchPage({
       description="A final launch checklist for marking the website live after domain, SSL, deployment, and production URL are ready."
       title={`${readiness.website.name} Launch`}
     >
+      <WebsiteNavigation active="launch" productionUrl={readiness.website.productionUrl} websiteId={websiteId} />
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Info
           label="Launch status"

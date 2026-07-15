@@ -14,6 +14,7 @@ import {
 } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
+import { WebsiteNavigation } from "@/components/website-navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { formatDashboardDateTime } from "@/lib/dashboard/dates";
@@ -108,6 +109,8 @@ export default async function WebsiteDeploymentsPage({
       description="Website-scoped release history across staging and production environments."
       title={`${hosting.website.name} Deployments`}
     >
+      <WebsiteNavigation active="deployments" productionUrl={hosting.website.productionUrl} websiteId={websiteId} />
+
       <Card>
         <CardHeader className="p-4">
           <CardTitle className="text-base">Record Manual Deployment</CardTitle>

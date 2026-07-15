@@ -12,6 +12,7 @@ import {
 } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
+import { WebsiteNavigation } from "@/components/website-navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { getForms } from "@/lib/dashboard/content-ops";
@@ -57,6 +58,8 @@ export default async function WebsiteFormsPage({
       description="Website-scoped public form definitions for connected websites."
       title={`Forms for ${detail.website.name}`}
     >
+      <WebsiteNavigation active="forms" productionUrl={detail.website.productionUrl} websiteId={websiteId} />
+
       <Card>
         <CardHeader className="p-4">
           <CardTitle className="text-base">Create Contact Form</CardTitle>

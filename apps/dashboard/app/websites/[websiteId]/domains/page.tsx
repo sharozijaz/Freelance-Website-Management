@@ -14,6 +14,7 @@ import {
 } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
+import { WebsiteNavigation } from "@/components/website-navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { formatDashboardDateTime } from "@/lib/dashboard/dates";
@@ -144,6 +145,8 @@ export default async function WebsiteDomainsPage({
       description="Track which hostnames belong to staging or production. This does not buy or register domains; it records and verifies domains you already control."
       title={`${domainState.website.name} Domains`}
     >
+      <WebsiteNavigation active="domains" productionUrl={domainState.website.productionUrl} websiteId={websiteId} />
+
       <Card>
         <CardHeader className="p-4">
           <CardTitle className="text-base">Add Domain</CardTitle>

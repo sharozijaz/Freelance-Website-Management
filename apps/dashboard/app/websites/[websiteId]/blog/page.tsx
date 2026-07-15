@@ -3,6 +3,7 @@ import { FileText, Tags } from "lucide-react";
 import { Badge, Button, Card, CardContent, EmptyState } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
+import { WebsiteNavigation } from "@/components/website-navigation";
 import { database } from "@/lib/auth";
 import { listBlogPosts, type BlogPostStatus } from "@/lib/dashboard/blog";
 import { createDashboardRequest } from "@/lib/dashboard/access";
@@ -68,6 +69,8 @@ export default async function BlogPostsPage({
       description="Manage article data for this connected website. The public website owns presentation."
       title={`${detail.website.name} Blog`}
     >
+      <WebsiteNavigation active="blog" productionUrl={detail.website.productionUrl} websiteId={websiteId} />
+
       {error ? (
         <Card className="border-error">
           <CardContent className="p-4 text-sm text-error">{error}</CardContent>

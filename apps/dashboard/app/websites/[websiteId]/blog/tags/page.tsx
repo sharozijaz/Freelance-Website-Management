@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button, Card, CardContent, CardHeader, CardTitle, EmptyState } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
+import { WebsiteNavigation } from "@/components/website-navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { listBlogTags } from "@/lib/dashboard/blog";
@@ -47,6 +48,8 @@ export default async function BlogTagsPage({
       description="Blog tags are explicit Blog records, not global platform taxonomies."
       title={`${detail.website.name} Blog Tags`}
     >
+      <WebsiteNavigation active="blog" productionUrl={detail.website.productionUrl} websiteId={websiteId} />
+
       {typeof query.error === "string" ? (
         <Card className="border-error">
           <CardContent className="p-4 text-sm text-error">{query.error}</CardContent>

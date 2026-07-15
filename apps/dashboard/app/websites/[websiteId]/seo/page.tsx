@@ -3,6 +3,7 @@ import { SearchCheck } from "lucide-react";
 import { Badge, Button, Card, CardContent, EmptyState } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
+import { WebsiteNavigation } from "@/components/website-navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { getWebsiteSeoOperations } from "@/lib/dashboard/seo";
@@ -49,6 +50,8 @@ export default async function WebsiteSeoPage({
       description="Operational SEO findings and settings workflow for this website."
       title={summary?.websiteName ? `${summary.websiteName} SEO` : "Website SEO"}
     >
+      <WebsiteNavigation active="seo" websiteId={websiteId} />
+
       <section className="grid gap-3 md:grid-cols-4">
         <Metric label="Findings" value={(summary?.findings ?? 0).toString()} />
         <Metric label="Errors" value={(summary?.errors ?? 0).toString()} />

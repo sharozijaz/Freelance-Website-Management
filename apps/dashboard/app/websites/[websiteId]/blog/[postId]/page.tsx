@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
+import { WebsiteNavigation } from "@/components/website-navigation";
 import { BlogPostForm } from "../post-form";
 import { database } from "@/lib/auth";
 import { listBlogCategories, listBlogTags, requireBlogPostAccess } from "@/lib/dashboard/blog";
@@ -49,6 +50,8 @@ export default async function EditBlogPostPage({
       description="Edit article data. The connected website decides how this post is rendered."
       title={post.title}
     >
+      <WebsiteNavigation active="blog" websiteId={websiteId} />
+
       <BlogPostForm
         action={`/api/blog/posts/${post.id}`}
         categories={categories}

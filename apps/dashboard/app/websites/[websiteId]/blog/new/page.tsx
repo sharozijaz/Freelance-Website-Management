@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@agency/ui";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
+import { WebsiteNavigation } from "@/components/website-navigation";
 import { BlogPostForm } from "../post-form";
 import { database } from "@/lib/auth";
 import { listBlogCategories, listBlogTags } from "@/lib/dashboard/blog";
@@ -50,6 +51,8 @@ export default async function NewBlogPostPage({
       description="Create article content. Presentation remains in the custom website."
       title={`New Post for ${detail.website.name}`}
     >
+      <WebsiteNavigation active="blog" productionUrl={detail.website.productionUrl} websiteId={websiteId} />
+
       <BlogPostForm
         action={`/api/websites/${websiteId}/blog/posts`}
         categories={categories}

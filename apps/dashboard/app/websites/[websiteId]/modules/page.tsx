@@ -4,6 +4,7 @@ import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState } f
 import { websiteTypeLabels } from "@agency/lib/modules";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
+import { WebsiteNavigation } from "@/components/website-navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { listWebsiteModules } from "@/lib/dashboard/modules";
@@ -51,6 +52,8 @@ export default async function WebsiteModulesPage({
       description="Enable backend capabilities for this website. A custom site can then use the Platform API for only the modules this client needs."
       title={`${website.name} Modules`}
     >
+      <WebsiteNavigation active="modules" productionUrl={website.productionUrl} websiteId={website.id} />
+
       {error ? (
         <Card className="border-error">
           <CardContent className="p-4 text-sm text-error">{error}</CardContent>

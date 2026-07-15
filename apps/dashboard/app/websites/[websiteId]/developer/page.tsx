@@ -3,6 +3,7 @@ import { Badge, Button, Card, CardContent } from "@agency/ui";
 import { websiteTypeLabels } from "@agency/lib/modules";
 import { DashboardPage } from "@/components/dashboard-page";
 import { UnauthorizedState } from "@/components/state-panels";
+import { WebsiteNavigation } from "@/components/website-navigation";
 import { database } from "@/lib/auth";
 import { createDashboardRequest } from "@/lib/dashboard/access";
 import { getWebsiteDetail } from "@/lib/dashboard/projects";
@@ -47,6 +48,8 @@ export default async function WebsiteDeveloperPage({
       description="Server credentials for future Platform API and SDK access."
       title={`${website.name} Developer`}
     >
+      <WebsiteNavigation active="developer" productionUrl={website.productionUrl} websiteId={website.id} />
+
       <Card>
         <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
           <div>
