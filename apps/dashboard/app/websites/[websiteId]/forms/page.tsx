@@ -25,8 +25,10 @@ export const metadata = {
 
 export default async function WebsiteFormsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ websiteId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const context = await getDashboardSessionContext();
   if (!context) {
@@ -38,6 +40,8 @@ export default async function WebsiteFormsPage({
   }
 
   const { websiteId } = await params;
+  const rawSearchParams = await searchParams;
+  const error = typeof rawSearchParams.error === "string" ? rawSearchParams.error : null;
   const request = createDashboardRequest(context);
   const [detail, forms] = await Promise.all([
     getWebsiteDetail({ database, request, websiteId }),
@@ -59,6 +63,12 @@ export default async function WebsiteFormsPage({
         websiteId={websiteId}
         websiteName={detail.website.name}
       />
+
+      {error ? (
+        <Card className="border-error">
+          <CardContent className="p-4 text-sm text-error">{error}</CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader className="p-4">
@@ -167,18 +177,44 @@ export default async function WebsiteFormsPage({
               <span className="text-sm text-muted-foreground">{form.status}</span>
               <div className="flex flex-wrap justify-end gap-2">
                 <Button asChild size="sm" variant="outline">
+                  <Link href={`/websites/${websiteId}/forms/${form.id}`}>Edit</Link>
+                </Button>
+                <Button asChild size="sm" variant="outline">
                   <Link href={`/websites/${websiteId}/forms/${form.id}/submissions`}>
                     Submissions
                   </Link>
                 </Button>
                 <form action="/api/forms" method="post">
-                  <input name="_action" type="hidden" value="archive" />
+                  <input name="_action" type="hidden" value="duplicate" />
                   <input name="formId" type="hidden" value={form.id} />
                   <input name="returnTo" type="hidden" value={`/websites/${websiteId}/forms`} />
-                  <Button size="sm" type="submit" variant="destructive">
-                    Archive
+                  <Button size="sm" type="submit" variant="outline">
+                    Duplicate
                   </Button>
                 </form>
+                {form.status === "archived" ? (
+                  <form action="/api/forms" method="post">
+                    <input name="_action" type="hidden" value="delete" />
+                    <input name="formId" type="hidden" value={form.id} />
+                    <input
+                      name="returnTo"
+                      type="hidden"
+                      value={`/websites/${websiteId}/forms?status=archived`}
+                    />
+                    <Button size="sm" type="submit" variant="destructive">
+                      Delete
+                    </Button>
+                  </form>
+                ) : (
+                  <form action="/api/forms" method="post">
+                    <input name="_action" type="hidden" value="archive" />
+                    <input name="formId" type="hidden" value={form.id} />
+                    <input name="returnTo" type="hidden" value={`/websites/${websiteId}/forms`} />
+                    <Button size="sm" type="submit" variant="destructive">
+                      Archive
+                    </Button>
+                  </form>
+                )}
               </div>
             </div>
           ))}

@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, inArray, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import type { createDatabaseClient } from "@agency/database";
 import {
   auditLogs,
@@ -36,6 +36,11 @@ export const formFieldTypes = [
 export type FormFieldType = (typeof formFieldTypes)[number];
 export type SubmissionStatus = "archived" | "new" | "read" | "spam";
 export type FormTemplate = "catering" | "contact" | "custom";
+interface FormConfiguration {
+  notification?: Record<string, unknown>;
+  redirectUrl?: string | null;
+  successMessage?: string | null;
+}
 
 export class FormValidationError extends Error {
   constructor(message: string) {
@@ -52,6 +57,49 @@ function safeString(value: unknown): string {
 
 function scopedOrgIds(request: DashboardRequest) {
   return getScopedOrganizationIds(request);
+}
+
+function formConfiguration(value: Record<string, unknown>): FormConfiguration {
+  return {
+    notification:
+      typeof value.notification === "object" && value.notification !== null
+        ? (value.notification as Record<string, unknown>)
+        : {},
+    redirectUrl: typeof value.redirectUrl === "string" ? value.redirectUrl : null,
+    successMessage: typeof value.successMessage === "string" ? value.successMessage : null,
+  };
+}
+
+async function uniqueFormSlug({
+  database,
+  name,
+  organizationId,
+  websiteId,
+}: {
+  database: Database;
+  name: string;
+  organizationId: string;
+  websiteId: string;
+}) {
+  const base = normalizeOrganizationSlug(name);
+  let slug = base;
+  let suffix = 2;
+
+  while (
+    await database.query.forms.findFirst({
+      where: and(
+        eq(forms.organizationId, organizationId),
+        eq(forms.websiteId, websiteId),
+        eq(forms.slug, slug),
+      ),
+      columns: { id: true },
+    })
+  ) {
+    slug = `${base}-${suffix.toString()}`;
+    suffix += 1;
+  }
+
+  return slug;
 }
 
 function parseMetadataNumber(metadata: Record<string, unknown>, key: string): number | null {
@@ -455,8 +503,14 @@ export async function getForms({
   assertDashboardPermission(request, "forms:read", params.organizationId);
   const { limit, offset } = getPagination(params);
   const orgIds = scopedOrgIds(request);
+  const lifecycleCondition =
+    params.status === "archived"
+      ? isNotNull(forms.deletedAt)
+      : params.status === "all"
+        ? isNull(forms.deletedAt)
+        : isNull(forms.deletedAt);
   const conditions = [
-    isNull(forms.deletedAt),
+    lifecycleCondition,
     params.organizationId ? eq(forms.organizationId, params.organizationId) : undefined,
     params.websiteId ? eq(forms.websiteId, params.websiteId) : undefined,
     orgIds ? inArray(forms.organizationId, orgIds) : undefined,
@@ -485,6 +539,206 @@ export async function getForms({
     .offset(offset);
 
   return { items: rows, page: params.page };
+}
+
+export async function requireFormAccess({
+  database,
+  formId,
+  request,
+}: {
+  database: Database;
+  formId: string;
+  request: DashboardRequest;
+}) {
+  const form = await database.query.forms.findFirst({
+    where: eq(forms.id, formId),
+    with: { fields: { orderBy: (field, { asc }) => [asc(field.fieldOrder)] }, website: true },
+  });
+
+  if (!form) {
+    throw new FormValidationError("Form was not found.");
+  }
+
+  assertDashboardPermission(request, "forms:read", form.organizationId);
+  return form;
+}
+
+export async function updateForm({
+  database,
+  formId,
+  input,
+  request,
+}: {
+  database: Database;
+  formId: string;
+  input: {
+    fields: ReturnType<typeof normalizeFormField>[];
+    name: string;
+    redirectUrl?: string | null;
+    status: "draft" | "published";
+    successMessage?: string | null;
+  };
+  request: DashboardRequest;
+}) {
+  const form = await requireFormAccess({ database, formId, request });
+  assertDashboardPermission(request, "forms:manage", form.organizationId);
+
+  if (form.deletedAt) {
+    throw new FormValidationError("Archived forms must be restored by duplicating or recreated.");
+  }
+
+  const name = input.name.trim();
+  if (name.length < 2) {
+    throw new FormValidationError("Form name must be at least 2 characters.");
+  }
+
+  const slug = normalizeOrganizationSlug(name);
+  const existingForm = await database.query.forms.findFirst({
+    where: and(
+      eq(forms.organizationId, form.organizationId),
+      eq(forms.websiteId, form.websiteId),
+      eq(forms.slug, slug),
+    ),
+    columns: { id: true },
+  });
+
+  if (existingForm && existingForm.id !== form.id) {
+    throw new FormValidationError(
+      "A form with this slug already exists for this website. Use a different form name.",
+    );
+  }
+
+  const fieldNames = new Set(input.fields.map((field) => field.name));
+  if (fieldNames.size !== input.fields.length) {
+    throw new FormValidationError("Form field names must be unique.");
+  }
+
+  const now = new Date();
+  const safeRedirect = validateSafeRedirect(input.redirectUrl);
+  const [updated] = await database.transaction(async (tx) => {
+    const [saved] = await tx
+      .update(forms)
+      .set({
+        configuration: {
+          ...formConfiguration(form.configuration),
+          redirectUrl: safeRedirect,
+          successMessage: input.successMessage?.trim() ?? "Thanks, your submission was received.",
+        },
+        name,
+        slug,
+        status: input.status,
+        updatedAt: now,
+      })
+      .where(eq(forms.id, form.id))
+      .returning();
+
+    if (!saved) {
+      throw new FormValidationError("Form could not be updated.");
+    }
+
+    await tx.delete(formFields).where(eq(formFields.formId, form.id));
+
+    if (input.fields.length > 0) {
+      await tx.insert(formFields).values(
+        input.fields.map((field, index) => ({
+          fieldOrder: index,
+          formId: form.id,
+          helpText: field.helpText,
+          label: field.label,
+          name: field.name,
+          options: field.options,
+          organizationId: form.organizationId,
+          placeholder: field.placeholder,
+          required: field.required,
+          type: field.type,
+          websiteId: form.websiteId,
+        })),
+      );
+    }
+
+    await tx.insert(auditLogs).values({
+      action: "form.updated",
+      actorUserId: request.context.user.id,
+      metadata: { slug, websiteId: form.websiteId },
+      organizationId: form.organizationId,
+      resourceId: form.id,
+      resourceType: "form",
+    });
+
+    return [saved];
+  });
+
+  return updated;
+}
+
+export async function duplicateForm({
+  database,
+  formId,
+  request,
+}: {
+  database: Database;
+  formId: string;
+  request: DashboardRequest;
+}) {
+  const form = await requireFormAccess({ database, formId, request });
+  assertDashboardPermission(request, "forms:manage", form.organizationId);
+
+  const name = `${form.name} Copy`;
+  const slug = await uniqueFormSlug({
+    database,
+    name,
+    organizationId: form.organizationId,
+    websiteId: form.websiteId,
+  });
+
+  const [duplicated] = await database.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(forms)
+      .values({
+        configuration: form.configuration,
+        name,
+        organizationId: form.organizationId,
+        slug,
+        status: "draft",
+        websiteId: form.websiteId,
+      })
+      .returning();
+
+    if (!created) {
+      throw new FormValidationError("Form could not be duplicated.");
+    }
+
+    if (form.fields.length > 0) {
+      await tx.insert(formFields).values(
+        form.fields.map((field) => ({
+          fieldOrder: field.fieldOrder,
+          formId: created.id,
+          helpText: field.helpText,
+          label: field.label,
+          name: field.name,
+          options: field.options,
+          organizationId: created.organizationId,
+          placeholder: field.placeholder,
+          required: field.required,
+          type: field.type,
+          websiteId: created.websiteId,
+        })),
+      );
+    }
+
+    await tx.insert(auditLogs).values({
+      action: "form.duplicated",
+      actorUserId: request.context.user.id,
+      metadata: { sourceFormId: form.id, websiteId: form.websiteId },
+      organizationId: form.organizationId,
+      resourceId: created.id,
+      resourceType: "form",
+    });
+
+    return [created];
+  });
+
+  return duplicated;
 }
 
 export async function archiveForm({
@@ -531,6 +785,50 @@ export async function archiveForm({
   });
 
   return archived;
+}
+
+export async function permanentlyDeleteForm({
+  database,
+  formId,
+  request,
+}: {
+  database: Database;
+  formId: string;
+  request: DashboardRequest;
+}) {
+  const form = await database.query.forms.findFirst({
+    where: eq(forms.id, formId),
+  });
+
+  if (!form) {
+    throw new FormValidationError("Form was not found.");
+  }
+
+  assertDashboardPermission(request, "forms:manage", form.organizationId);
+
+  if (form.status !== "archived" || !form.deletedAt) {
+    throw new FormValidationError("Archive this form before permanently deleting it.");
+  }
+
+  const [deleted] = await database.transaction(async (tx) => {
+    await tx.insert(auditLogs).values({
+      action: "form.deleted",
+      actorUserId: request.context.user.id,
+      metadata: { slug: form.slug, websiteId: form.websiteId },
+      organizationId: form.organizationId,
+      resourceId: form.id,
+      resourceType: "form",
+    });
+
+    const [removed] = await tx.delete(forms).where(eq(forms.id, form.id)).returning();
+    return [removed];
+  });
+
+  if (!deleted) {
+    throw new FormValidationError("Form could not be deleted.");
+  }
+
+  return deleted;
 }
 
 export async function getSubmissions({

@@ -247,6 +247,8 @@ Custom websites choose their own Markdown renderer and must render user-authored
 
 Connected websites must not print `post.content.markdown` directly as plain text. They should parse Markdown into styled article UI using the website's own design system. At minimum, public websites should style headings, paragraphs, ordered and unordered lists, links, blockquotes, dividers, inline code, bold, italic, strike, and images. Featured media should be rendered separately as the article hero or cover image when present.
 
+Connected website QA must include a formatting smoke test with headings, bold, italic, strike, lists, links, quotes, inline images, and featured media. If the public article page shows raw Markdown markers such as `**`, `_`, `##`, or image syntax, the connected website integration is incomplete even if the Platform API response is correct.
+
 ## Featured Media
 
 Featured media is nullable.

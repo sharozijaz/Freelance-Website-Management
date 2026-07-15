@@ -194,16 +194,40 @@ export default async function FormsPage({
               <span className="text-sm text-muted-foreground">{form.status}</span>
               <div className="flex flex-wrap justify-end gap-2">
                 <Button asChild size="sm" variant="outline">
-                  <Link href={`/submissions?formId=${form.id}`}>Submissions</Link>
+                  <Link href={`/websites/${form.websiteId}/forms/${form.id}`}>Edit</Link>
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/websites/${form.websiteId}/forms/${form.id}/submissions`}>
+                    Submissions
+                  </Link>
                 </Button>
                 <form action="/api/forms" method="post">
-                  <input name="_action" type="hidden" value="archive" />
+                  <input name="_action" type="hidden" value="duplicate" />
                   <input name="formId" type="hidden" value={form.id} />
                   <input name="returnTo" type="hidden" value="/forms" />
-                  <Button size="sm" type="submit" variant="destructive">
-                    Archive
+                  <Button size="sm" type="submit" variant="outline">
+                    Duplicate
                   </Button>
                 </form>
+                {form.status === "archived" ? (
+                  <form action="/api/forms" method="post">
+                    <input name="_action" type="hidden" value="delete" />
+                    <input name="formId" type="hidden" value={form.id} />
+                    <input name="returnTo" type="hidden" value="/forms?status=archived" />
+                    <Button size="sm" type="submit" variant="destructive">
+                      Delete
+                    </Button>
+                  </form>
+                ) : (
+                  <form action="/api/forms" method="post">
+                    <input name="_action" type="hidden" value="archive" />
+                    <input name="formId" type="hidden" value={form.id} />
+                    <input name="returnTo" type="hidden" value="/forms" />
+                    <Button size="sm" type="submit" variant="destructive">
+                      Archive
+                    </Button>
+                  </form>
+                )}
               </div>
             </div>
           ))}

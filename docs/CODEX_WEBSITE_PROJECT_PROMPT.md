@@ -25,6 +25,7 @@ Blog rendering requirements:
 - Style headings, paragraphs, lists, links, quotes, dividers, inline code, bold, italic, strike, and images so dashboard-authored posts look polished on the public site.
 - Render `featuredMedia` as the article hero/cover image when present.
 - Keep public presentation in the custom website; do not ask the platform to return React components or page layout.
+- Before delivery, create or test a sample Sharoz-authored post that uses H1-H6, bold, italic, strike, links, lists, quotes, an inline image, and featured media. The public article page must render each format visually, not show Markdown syntax such as `**bold**`, `*italic*`, or `## Heading`.
 
 Website identity:
 - Ask for the Sharoz website ID, environment, and API credentials before wiring platform data.

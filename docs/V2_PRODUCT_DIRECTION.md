@@ -183,6 +183,7 @@ This section captures the current working direction so the project does not drif
    - Document how a Codex-built custom website connects to the platform.
    - Include website id, environment credentials, enabled modules, API examples, and expected behavior for Blog, Forms, Media, and SEO.
    - Create a reusable prompt/template for future Codex-built client websites so new projects integrate with the platform consistently.
+   - Require connected websites to pass a blog formatting smoke test before handoff: headings, bold, italic, strike, lists, links, quotes, inline images, and featured media must render visually instead of appearing as raw Markdown.
    - Require future Codex-built websites to expose a media manifest endpoint that lists public media assets, URLs, alt text, dimensions where available, and usage context.
    - Use that manifest for a future website media sync/import feature so existing custom-site images can appear in the platform Media module, Blog editor media picker, Featured Media dropdown, and SEO missing-alt checks.
 
