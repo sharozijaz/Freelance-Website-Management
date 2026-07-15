@@ -50,41 +50,6 @@ export default async function WebsiteDetailPage({
 
   return (
     <DashboardPage
-      actions={
-        <>
-          {website.productionUrl ? (
-            <Button asChild size="sm" variant="outline">
-              <a href={website.productionUrl}>Open Website</a>
-            </Button>
-          ) : null}
-          <Button asChild size="sm" variant="outline">
-            <a href={`/websites/${website.id}/hosting`}>Hosting</a>
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <a href={`/websites/${website.id}/domains`}>Domains</a>
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <a href={`/websites/${website.id}/launch`}>Launch</a>
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <a href={`/websites/${website.id}/environments`}>Environments</a>
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <a href={`/websites/${website.id}/modules`}>Modules</a>
-          </Button>
-          {website.websiteType === "sharoz_connected" ? (
-            <Button asChild size="sm" variant="outline">
-              <a href={`/websites/${website.id}/blog`}>Blog</a>
-            </Button>
-          ) : null}
-          <Button asChild size="sm" variant="outline">
-            <a href={`/websites/${website.id}/developer`}>Developer</a>
-          </Button>
-          <Button asChild size="sm">
-            <a href={`/websites/${website.id}/seo`}>SEO</a>
-          </Button>
-        </>
-      }
       description="Website identity, delivery context, content operations, and activity."
       title={website.name}
     >
