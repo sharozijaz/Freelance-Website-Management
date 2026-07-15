@@ -29,6 +29,7 @@ interface MediaOption {
   altText: string | null;
   filename: string;
   id: string;
+  metadata: Record<string, unknown>;
 }
 
 export function BlogPostForm({
@@ -71,7 +72,15 @@ export function BlogPostForm({
             <MarkdownEditor
               help="Formatted article content stored as portable markdown for connected websites."
               label="Content"
+              media={media.map((asset) => ({
+                altText: asset.altText,
+                filename: asset.filename,
+                id: asset.id,
+                publicUrl:
+                  typeof asset.metadata.publicUrl === "string" ? asset.metadata.publicUrl : null,
+              }))}
               name="content"
+              storageKey={`blog-post-draft:${post?.id ?? action}`}
               value={post?.content.markdown}
             />
           </CardContent>
